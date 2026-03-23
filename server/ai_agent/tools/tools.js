@@ -68,23 +68,16 @@ const setRiskLevelTool = new DynamicTool({
     "Update consultation risk when severity changes: Mild, Moderate, or Critical.",
   schema: z
     .object({
-      risk_level: z.enum(["Mild", "Moderate", "Critical"]).optional(),
+      risk_level: z.enum(["Mild", "Moderate", "Critical"]),
     })
     .passthrough(),
 
   func: async (args, config) => {
     const { consultationId, userId } = getRuntimeIds(config);
-
-    // Debug logging for troubleshooting
-    if (!consultationId || !userId) {
-      console.warn(`[setRiskLevelTool] Missing session context - consultationId: ${consultationId}, userId: ${userId}`);
-      return "Risk level update failed: no active consultation session.";
-    }
-
-    const risk = (args?.risk_level || "Mild").toString().trim();
+    const risk = args?.risk_level;
 
     if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
-      return `Risk level update failed: invalid session IDs (cid:${consultationId}, uid:${userId}).`;
+      return "Risk level update failed: invalid session.";
     }
 
     const updated = await Consultation.findOneAndUpdate(
@@ -108,24 +101,21 @@ const setRiskLevelTool = new DynamicTool({
 const getMedicineTool = new DynamicTool({
   name: "get_medicine",
   description:
-    "Look up medicine/OTC info for a condition. Required parameter: 'disease' (string, e.g. 'headache', 'cough').",
+    "Look up OTC / label information for a condition (e.g. headache, cough). Call after checking allergies via get_patient_profile.",
   schema: z
     .object({
-      disease: z.string().min(1, "disease is required"),
+      disease: z.string(),
     })
     .passthrough(),
 
   func: async (args) => {
-    // Handle multiple parameter name aliases that LLMs might use
-    const disease = (args?.disease || args?.input || args?.condition || "")
-      .toString()
-      .toLowerCase()
+    const disease = args?.disease
+      ?.toLowerCase()
       .replace(/[^a-z\s]/g, "")
       .trim();
 
-    // Strict validation: reject empty after cleanup
     if (!disease) {
-      return "Medicine lookup requires a condition name (e.g., 'headache', 'cold').";
+      return "Specify a condition name (e.g. cold, cough, headache).";
     }
 
     const controller = new AbortController();

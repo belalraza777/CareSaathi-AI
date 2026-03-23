@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { ChatGroq } from "@langchain/groq";
-import { HumanMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { tools } from "../tools/tools.js";
-import SYSTEM_PROMPT, { appMessages } from "./systemPrompt.js";
+import SYSTEM_PROMPT, { CASUAL_PROMPT, appMessages } from "./systemPrompt.js";
 import { loadHistory } from "./agentHelpers.js";
 
+// Groq model id and max graph steps (each step = model and/or tools).
 const MODEL_ID = "llama-3.1-8b-instant";
+const RECURSION_LIMIT = 12;
 
 const model = new ChatGroq({
   model: MODEL_ID,
@@ -13,6 +16,14 @@ const model = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// ReAct loop: clinical system prompt + Mongo-backed tools.
+const agent = createReactAgent({
+  llm: model,
+  tools,
+  systemPrompt: SYSTEM_PROMPT,
+});
+
+// Flatten LangChain message content (string or multimodal chunks) to a string.
 function normalizeContent(content) {
   if (Array.isArray(content)) {
     return content
@@ -23,6 +34,7 @@ function normalizeContent(content) {
   return String(content || "").trim();
 }
 
+// Strip markdown fences so JSON.parse works on triage output.
 function parseTriageJson(raw) {
   const text = normalizeContent(raw)
     .replace(/```json\s*/gi, "")
@@ -35,59 +47,70 @@ function parseTriageJson(raw) {
   }
 }
 
-async function triage(llm, message) {
-  // Quick check: if message is clearly conversational (no health keywords), skip symptom extraction
-  const healthKeywords = ['pain', 'hurt', 'sick', 'fever', 'cough', 'cold', 'ache', 'symptom', 'medicine', 'drug', 'allergy', 'bleeding', 'hospital', 'emergency', 'doctor', 'diagnosis', 'treatment', 'blood', 'nausea', 'dizzy', 'headache', 'flu', 'covid', 'rash', 'wound', 'sting', 'burn', 'fracture', 'sprain'];
-  const msgLower = message.toLowerCase().replace(/[^a-z\s]/g, '');
-  const hasHealthKeyword = healthKeywords.some(kw => msgLower.includes(kw));
-
-  // If no health keywords and message is short/greeting-like, skip expensive LLM call
-  if (!hasHealthKeyword && message.length < 50) {
-    const greetings = ['hi', 'hello', 'hey', 'thanks', 'thank you', 'bye', 'okay', 'ok', 'sure', 'good', 'morning', 'afternoon', 'evening', 'night'];
-    const isGreeting = greetings.some(g => msgLower.includes(g));
-    if (isGreeting) {
-      return { symptoms: [], emergency: false }; // No symptom extraction for greetings
-    }
+// True only for short hi/thanks-style input (skips tool agent for speed).
+function isQuickGreeting(message) {
+  const t = String(message ?? "").trim();
+  if (t.length === 0 || t.length > 100) return false;
+  if (/\b(pain|fever|cough|ache|hurt|headache|blood|nausea|dizzy|symptom|sick|injury|chest)\b/i.test(t)) {
+    return false;
   }
+  return /^(hi|hello|hey|hii|namaste|thanks|thank\s+you|bye|ok|okay|good\s+(morning|afternoon|evening))\b/i.test(
+    t
+  );
+}
 
-  const out = await llm.invoke(
-    `
+// One LLM call: symptoms for DB + emergency short-circuit before the agent.
+async function triage(model, message) {
+  const triageLlm = model.bind({ maxTokens: 220, temperature: 0.2 });
+  const out = await triageLlm.invoke(`
 Respond with ONLY valid JSON (no markdown):
 {"symptoms":["short phrases"],"emergency":false}
-Rules: symptoms empty if none or if user only greeting/chatting. emergency true only for likely life-threatening cases (stroke, severe bleeding, can't breathe, unconscious). Unsure → false.
+Rules: symptoms empty if none. emergency true only for likely life-threatening cases (stroke, severe bleeding, can't breathe, unconscious). Unsure → false.
 User: ${JSON.stringify(message)}
-`,
-    { temperature: 0.2, maxTokens: 220 }
-  );
+`);
   const parsed = parseTriageJson(out.content);
   if (!parsed || typeof parsed !== "object") {
     return { symptoms: [], emergency: false };
   }
   const symptoms = Array.isArray(parsed.symptoms)
-    ? parsed.symptoms.map((s) => String(s).trim()).filter((s) => s && s.toLowerCase() !== "none" && s.length > 2)
+    ? parsed.symptoms.map((s) => String(s).trim()).filter((s) => s && s.toLowerCase() !== "none")
     : [];
   return { symptoms, emergency: Boolean(parsed.emergency) };
 }
 
 export async function handleUserMessage({ userId, consultationId, message }) {
   try {
-    // Run triage and fetch history in parallel
+    // Fast path: no triage, no tools.
+    if (isQuickGreeting(message)) {
+      const history = await loadHistory(consultationId);
+      const casual = model.bind({ maxTokens: 220, temperature: 0.72 });
+      const out = await casual.invoke([
+        new SystemMessage(CASUAL_PROMPT),
+        ...history.slice(-6),
+        new HumanMessage(message),
+      ]);
+      return { response: normalizeContent(out.content) || appMessages.fallback, symptoms: [] };
+    }
+
+    // Triage + history in parallel.
     const [analysis, history] = await Promise.all([triage(model, message), loadHistory(consultationId)]);
 
-    // Return emergency response if critical
     if (analysis.emergency) {
       return { response: appMessages.emergency, symptoms: analysis.symptoms };
     }
 
-    // Invoke model directly with history and new message
-    const result = await model.invoke([
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history,
-      new HumanMessage(message)
-    ]);
+    // Full clinical path: tools read userId/consultationId from configurable.
+    const result = await agent.invoke(
+      { messages: [...history, new HumanMessage(message)] },
+      {
+        configurable: { userId: String(userId), consultationId: String(consultationId) },
+        recursionLimit: RECURSION_LIMIT,
+      }
+    );
 
-    // Extract final response from model output
-    const text = normalizeContent(result.content || "").trim() || appMessages.fallback;
+    // Final assistant turn after tool loop.
+    const last = result.messages[result.messages.length - 1];
+    const text = normalizeContent(last?.content || "").trim() || appMessages.fallback;
     return { response: text, symptoms: analysis.symptoms };
   } catch (error) {
     console.error(`Agent error [${userId}]:`, error.message);
