@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { handleUserMessage } from "../ai_agent/core/agent.js";
+import { handleUserMessage } from "../ai_agent/agent/agent.js";
 import Consultation from "../models/consultationModel.js";
 import Message from "../models/messageModel.js";
 
@@ -9,10 +9,12 @@ const storeMessage = async (consultationId, role, message) => {
         throw new Error("Invalid consultationId");
     }
 
+    const safeMessage = typeof message === "string" ? message : JSON.stringify(message);
+
     await Message.create({
         consultationId: new mongoose.Types.ObjectId(consultationId),
         role,
-        message,
+        message: safeMessage, // Ensure schema always receives a string payload.
         timestamp: new Date(),
     });
 };
@@ -42,6 +44,7 @@ const createConsultation = async (req, res) => {
     });
 };
 
+
 // Chat endpoint: get agent response and extract symptoms from message
 const chatConsultation = async (req, res) => {
         const consultationId = req.params.consultationId || req.body.consultationId;
@@ -63,42 +66,21 @@ const chatConsultation = async (req, res) => {
         }
 
         // Get agent response and extracted symptoms
-        const { response, symptoms } = await handleUserMessage({
+        const response = await handleUserMessage({
             consultationId,
             userId: req.user.id,
             message,
         });
+        const safeResponse = typeof response === "string" ? response : JSON.stringify(response);
 
         // Store user and assistant messages in history
         await storeMessage(consultationId, "user", message);
-        await storeMessage(consultationId, "assistant", response);
+        await storeMessage(consultationId, "assistant", safeResponse); // Persist exactly what we return to client.
 
-        // Add extracted symptoms to array if valid (strict validation)
-        if (Array.isArray(symptoms) && symptoms.length > 0) {
-            const symptomArray = Array.isArray(consultation.symptom) ? consultation.symptom : [];
-            for (const symptom of symptoms) {
-                // Only add non-empty, reasonable length symptoms (not conversational phrases)
-                const cleanSymptom = String(symptom).trim().toLowerCase();
-                if (cleanSymptom && cleanSymptom.length > 2 && cleanSymptom.length < 50 && !symptomArray.includes(cleanSymptom)) {
-                    symptomArray.push(cleanSymptom);
-                }
-            }
-            // Update database only if new symptoms were actually added
-            if (symptomArray.length !== (consultation.symptom?.length || 0)) {
-                consultation.symptom = symptomArray;
-                await consultation.save();
-            }
-        }
-
-        // Fetch updated consultation to get latest riskLevel
-        consultation = await Consultation.findOne({
-            consultationId,
-            userId: req.user.id,
-        });
-
+    
         return res.status(200).json({
             success: true,
-            response,
+            response: safeResponse,
             data: {
                 symptoms: consultation.symptom || [],
                 riskLevel: consultation.riskLevel || "Mild",

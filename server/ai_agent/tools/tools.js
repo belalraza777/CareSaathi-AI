@@ -1,158 +1,313 @@
 import mongoose from "mongoose";
-import { DynamicTool } from "@langchain/core/tools";
+import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-
 import Profile from "../../models/profileModel.js";
 import Consultation from "../../models/consultationModel.js";
+import { llm } from "../agent/agent.js"; // Use the named export exposed by agent.js.
 
-// FDA fetch timeout; abort so the agent does not stall.
-const FDA_TIMEOUT_MS = 12_000;
 
-// Tool handlers read userId / consultationId from RunnableConfig.configurable.
+const FDA_TIMEOUT_MS = 12000;
+
+// -------------------------
+// Helpers 
+// -------------------------
 const getRuntimeIds = (config) => ({
-  userId: config?.configurable?.userId,
-  consultationId: config?.configurable?.consultationId,
+  userId:
+    config?.configurable?.userId ||
+    config?.userId ||
+    null,
+  consultationId:
+    config?.configurable?.consultationId ||
+    config?.consultationId ||
+    null,
 });
 
-// Shared Mongo helpers for tool handlers (validate strings from RunnableConfig).
-const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value));
+const isValidObjectId = (value) =>
+  mongoose.Types.ObjectId.isValid(String(value));
 
-const toObjectId = (value) => new mongoose.Types.ObjectId(String(value));
+const toObjectId = (value) =>
+  new mongoose.Types.ObjectId(String(value));
 
-// Passthrough allows extra keys; Groq rejects z.object({}) when the model invents args.
-const looseParams = z.object({}).passthrough();
+// -------------------------
+// Schemas (RELAXED FOR LLM)
+// -------------------------
+// Coerce null/non-object tool payloads into an empty object so LLM tool calls do not fail schema validation.
+const objectPayload = z.preprocess(
+  (value) => (value && typeof value === "object" ? value : {}),
+  z.object({}).passthrough()
+);
 
+const emptySchema = objectPayload;
 
-// Tool: load logged-in user's allergies and history before suggesting meds.
-const getPatientProfileTool = new DynamicTool({
-  name: "get_patient_profile",
-  description:
-    "Call BEFORE recommending any medication. No parameters required—profile is loaded from the logged-in user. Returns age, gender, allergies, and medical history.",
-  schema: looseParams,
-
-  func: async (_, config) => {
-    const { userId } = getRuntimeIds(config);
-
-    if (!isValidObjectId(userId)) {
-      return "Patient profile: No profile information available.";
-    }
-
-    const profile = await Profile.findOne({ user: toObjectId(userId) })
-      .lean()
-      .select({ allergies: 1, medicalHistory: 1, age: 1, gender: 1 });
-
-    if (!profile) {
-      return "Patient profile: No profile information available for this user.";
-    }
-
-    const allergies =
-      profile.allergies?.length > 0 ? profile.allergies.join(", ") : "None reported";
-    const history =
-      profile.medicalHistory?.length > 0 ? profile.medicalHistory.join(", ") : "None reported";
-
-    return [
-      "Patient profile:",
-      `- Age: ${profile.age ?? "Not specified"}`,
-      `- Gender: ${profile.gender ?? "Not specified"}`,
-      `- Allergies: ${allergies}`,
-      `- Medical history: ${history}`,
-    ].join("\n");
-  },
-});
-
-
-// Tool: persist Mild / Moderate / Critical on the consultation document.
-const setRiskLevelTool = new DynamicTool({
-  name: "set_risk_level",
-  description:
-    "Update consultation risk when severity changes: Mild, Moderate, or Critical.",
-  schema: z
+const riskSchema = z.preprocess(
+  (value) => (value && typeof value === "object" ? value : {}),
+  z
     .object({
-      risk_level: z.enum(["Mild", "Moderate", "Critical"]),
+      risk_level: z.enum(["Mild", "Moderate", "Critical"]).optional(),
+      input: z.string().nullable().optional(), // fallback for LLM
     })
-    .passthrough(),
+    .passthrough()
+);
 
-  func: async (args, config) => {
-    const { consultationId, userId } = getRuntimeIds(config);
-    const risk = args?.risk_level;
-
-    if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
-      return "Risk level update failed: invalid session.";
-    }
-
-    const updated = await Consultation.findOneAndUpdate(
-      {
-        consultationId: toObjectId(consultationId),
-        userId: toObjectId(userId),
-      },
-      { riskLevel: risk },
-      { new: true }
-    );
-
-    if (!updated) {
-      return "Risk level update failed: consultation not found.";
-    }
-
-    return `Risk level set to ${risk}.`;
-  },
-});
-
-// Tool: public FDA drug label search (generic names, warnings, dosage snippets).
-const getMedicineTool = new DynamicTool({
-  name: "get_medicine",
-  description:
-    "Look up OTC / label information for a condition (e.g. headache, cough). Call after checking allergies via get_patient_profile.",
-  schema: z
+const medicineSchema = z.preprocess(
+  (value) => (value && typeof value === "object" ? value : {}),
+  z
     .object({
-      disease: z.string(),
+      symptom: z.string().optional(),
+      input: z.string().nullable().optional(),
     })
-    .passthrough(),
+    .passthrough()
+);
 
-  func: async (args) => {
-    const disease = args?.disease
-      ?.toLowerCase()
-      .replace(/[^a-z\s]/g, "")
-      .trim();
+const calculateRiskSchema = z.preprocess(
+  (value) => (value && typeof value === "object" ? value : {}),
+  z
+    .object({
+      symptoms: z.array(z.string()).optional(),
+      input: z.union([z.string(), z.array(z.string()), z.null()]).optional(),
+    })
+    .passthrough()
+);
 
-    if (!disease) {
-      return "Specify a condition name (e.g. cold, cough, headache).";
-    }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FDA_TIMEOUT_MS);
-
+// -------------------------
+// Tool 1: Get Patient Profile
+// -------------------------
+export const getPatientProfileTool = tool(
+  async (_, config) => {
     try {
-      const res = await fetch(
-        `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(disease)}&limit=1`,
-        { signal: controller.signal }
-      );
-      clearTimeout(timeout);
+      const { userId } = getRuntimeIds(config);
 
-      if (!res.ok) {
-        return `Medicine lookup temporarily unavailable (${res.status}). Recommend consulting a pharmacist for OTC options.`;
+      if (!isValidObjectId(userId)) {
+        return JSON.stringify({ error: "Session missing" });
       }
 
-      const data = await res.json();
-      const result = data.results?.[0] || {};
-      const medicines = result.openfda?.generic_name || [];
-      const medicineText = medicines.length > 0 ? medicines.join(", ") : "None found in FDA label sample";
+      const profile = await Profile.findOne({ user: toObjectId(userId) })
+        .lean()
+        .select({
+          allergies: 1,
+          medicalHistory: 1,
+          age: 1,
+          gender: 1,
+        });
 
-      return [
-        `Condition search: ${disease}`,
-        `- Generic names (sample): ${medicineText}`,
-        `- Indications: ${result.indications_and_usage?.[0] || "Not specified"}`,
-        `- Dosage: ${result.dosage_and_administration?.[0] || "See package insert"}`,
-        `- Warnings: ${result.warnings?.[0] || "See label"}`,
-        `- Adverse reactions: ${result.adverse_reactions?.[0] || "See label"}`,
-      ].join("\n");
+      if (!profile) {
+        // No profile found - return sensible defaults
+        return JSON.stringify({
+          age: null,
+          gender: null,
+          allergies: [],
+          medicalHistory: [],
+          note: "Profile not yet created",
+        });
+      }
+
+      return JSON.stringify({
+        age: profile.age || null,
+        gender: profile.gender || null,
+        allergies: profile.allergies || [],
+        medicalHistory: profile.medicalHistory || [],
+      });
+
     } catch (err) {
-      clearTimeout(timeout);
-      const msg = err.name === "AbortError" ? "Request timed out" : err.message;
-      console.error(`Medicine fetch failed for "${disease}":`, msg);
-      return `Medicine lookup failed (${msg}). Suggest general OTC caution and pharmacist consult.`;
+      throw new Error(`Failed to retrieve patient profile: ${err.message}`);
     }
   },
-});
+  {
+    name: "get_patient_profile",
+    description:
+      "REQUIRED: Get patient medical profile including age, gender, allergies, and medical history. You MUST call this before recommending ANY medicine or medical advice. Always call this first when patient mentions symptoms. Don't pass any input.",
+    schema: emptySchema,
+  }
+);
 
-// Order matches how the agent should think: profile → risk → medicine (prompt enforces this).
-export const tools = [getPatientProfileTool, setRiskLevelTool, getMedicineTool];
+// -------------------------
+// Tool 2: Set Risk Level
+// -------------------------
+export const setRiskLevelTool = tool(
+  async (args, config) => {
+    try {
+      const { consultationId, userId } = getRuntimeIds(config);
+
+      // Accept both risk_level and input parameter names for flexibility
+      let risk = args?.risk_level || args?.input;
+
+      // If risk is a JSON string, parse it
+      if (typeof risk === "string" && risk.includes("{")) {
+        try {
+          const parsed = JSON.parse(risk);
+          risk = parsed.risk || parsed.risk_level || risk;
+        } catch { }
+      }
+
+      if (!["Mild", "Moderate", "Critical"].includes(String(risk).trim())) {
+        return JSON.stringify({ success: false, error: "Invalid risk level. Use Mild, Moderate, or Critical" });
+      }
+
+      if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
+        return JSON.stringify({ success: false, error: "Session missing" });
+      }
+
+      const updated = await Consultation.findOneAndUpdate(
+        {
+          consultationId: toObjectId(consultationId),
+          userId: toObjectId(userId),
+        },
+        { riskLevel: String(risk).trim() },
+        { new: true }
+      );
+
+      return updated
+        ? JSON.stringify({ success: true, risk: String(risk).trim(), message: "Risk level updated" })
+        : JSON.stringify({ success: false, error: "Update failed" });
+    } catch (err) {
+      console.error("set_risk_level error:", err);
+      return JSON.stringify({ success: false, error: "Risk update failed" });
+    }
+  },
+  {
+    name: "set_risk_level",
+    description:
+      "REQUIRED: Save the patient's risk level (Mild, Moderate, or Critical) after assessment. Call after you use calculate_risk. Only update it changes or if you have new information. This helps keep track of patient's condition over time.",
+    schema: riskSchema,
+  }
+);
+
+// -------------------------
+// Tool 3: Recommend OTC Medicine (with FDA API)
+// -------------------------
+export const recommendOTCTool = tool(
+  async (args) => {
+    try {
+      const raw =
+        args?.symptom ||
+        args?.input ||
+        "";
+
+      const cleanSymptom = String(raw)
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, "")
+        .trim();
+
+      if (!cleanSymptom) {
+        return JSON.stringify({
+          error: "No symptom provided",
+          fallback: [],
+        });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FDA_TIMEOUT_MS);
+
+      const res = await fetch(
+        `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(
+          cleanSymptom
+        )}&limit=1`,
+        { signal: controller.signal }
+      );
+
+      clearTimeout(timeout);
+
+      // Extract clean medicine data from FDA API response
+      const data = await res.json();
+      const result = data.results?.[0] || {};
+
+      return JSON.stringify({
+        symptom: cleanSymptom,
+        medicines: result.openfda?.generic_name?.length
+          ? result.openfda.generic_name.slice(0, 3) // Top 3 medicines only
+          : [], // Fallback for common symptoms
+        dosage_info: result.dosage_and_administration?.[0]?.substring(0, 150) || "",
+      }, null, 2);
+    } catch (error) {
+      throw new Error(`Failed to fetch medicine recommendation: ${error.message}`);
+    }
+  },
+  {
+    name: "recommend_safe_otc",
+    description:
+      "REQUIRED: Get safe OTC medicine recommendations for symptoms. Call for suggest medicines. Provides FDA data and safe dosages. Only one symptom at a time and for multiple symptoms, call separately.",
+    schema: medicineSchema,
+  }
+);
+
+// -------------------------
+// Tool 4: Calculate Risk Level (based on symptoms)
+// -------------------------
+export const calculateRiskTool = tool(
+  async (args) => {
+    try {
+      const rawSymptoms = Array.isArray(args?.symptoms)
+        ? args.symptoms
+        : typeof args?.input === "string"
+          ? [args.input]
+          : Array.isArray(args?.input)
+            ? args.input
+            : [];
+
+      const response = await llm.invoke(`You are a medical triage assistant. Based ONLY on the provided symptoms, estimate risk.
+Return ONLY valid JSON with this exact shape:
+{"risk":"Mild"|"Moderate"|"Critical","reason":"short reason"}
+Symptoms: ${JSON.stringify(rawSymptoms)}`);
+
+      const content = String(response.content).replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(content); 
+      const risk = parsed.risk || "Mild";
+
+      return JSON.stringify({ risk, reason: parsed.reason || "No reason provided" });
+
+    } catch (err) {
+      throw new Error(`Risk calculation failed: ${err.message}`);
+    }
+  },
+  {
+    name: "calculate_risk",
+    description:
+      "REQUIRED: Calculate if patient's symptoms are Mild, Moderate, or Critical risk. Call when patient mentions any symptoms. Results should be saved with set_risk_level.",
+    schema: calculateRiskSchema,
+  }
+);
+
+// -------------------------
+// Tool 5  Consultation form Data
+// -------------------------
+export const consultationDataTool = tool(
+  async (_, config) => {
+    try {
+      const { consultationId, userId } = getRuntimeIds(config);
+      if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
+        return JSON.stringify({ error: "Session missing" });
+      }
+      const consultation = await Consultation.findOne({
+        consultationId: toObjectId(consultationId),
+        userId: toObjectId(userId),
+      }).lean();
+
+      if (!consultation) {
+        return JSON.stringify({ error: "Consultation not found" });
+      }
+
+      return JSON.stringify(consultation);
+
+    } catch (err) {
+      throw new Error(`Failed to retrieve consultation data: ${err.message}`);
+    }
+  },
+  {
+    name: "get_consultation_data",
+    description:
+      "REQUIRED: Retrieve consultation form data for a patient.",
+    schema: emptySchema,
+  }
+);
+
+// -------------------------
+// Export
+// -------------------------
+export const tools = [
+  getPatientProfileTool,
+  setRiskLevelTool,
+  recommendOTCTool,
+  calculateRiskTool,
+  consultationDataTool
+];
