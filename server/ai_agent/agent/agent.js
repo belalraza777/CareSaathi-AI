@@ -1,27 +1,26 @@
 import "dotenv/config";
-import mongoose from "mongoose";
 import { ChatGroq } from "@langchain/groq";
 import { HumanMessage } from "@langchain/core/messages";
-import Consultation from "../../models/consultationModel.js";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { tools } from "../tools/tools.js";
 import { loadHistory, normalizeContent } from "./agentHelpers.js"; // Pull in output normalizer used after agent invoke.
 import SYSTEM_PROMPT from "./systemPrompt.js"; // systemPrompt.js exports default, not named.
 
 
 const model = new ChatGroq({
-  model: "llama-3.1-8b-instant",
-  temperature: 0.3,
+  model: "openai/gpt-oss-120b", //other backup models: "llama-3.3-70b-versatile", "openai/gpt-oss-20b", 
+  temperature: 0.4,
   apiKey: process.env.GROQ_API_KEY,
 });
 
 export const llm = model; // Named export for tools that need direct model access.
 
-// Shared ReAct agent — tools resolve userId from config at runtime
-const agent = createReactAgent({
-  llm: model,
+
+// Shared agent — tools resolve userId from config at runtime.
+const agent = createAgent({
+  model,
   tools,
-  stateModifier: SYSTEM_PROMPT,
+  systemPrompt: SYSTEM_PROMPT,
 });
 
 

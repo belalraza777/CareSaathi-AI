@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import Message from "../../models/messageModel.js";
 
-const HISTORY_LIMIT = 20;
+const HISTORY_LIMIT = 10;
 
 // -------------------------
 // Load Conversation History

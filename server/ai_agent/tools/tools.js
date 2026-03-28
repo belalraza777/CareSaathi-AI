@@ -4,6 +4,7 @@ import { z } from "zod";
 import Profile from "../../models/profileModel.js";
 import Consultation from "../../models/consultationModel.js";
 import { llm } from "../agent/agent.js"; // Use the named export exposed by agent.js.
+import { retrieveMedicalKnowledgeTool } from "./ragTool.js";
 
 
 const FDA_TIMEOUT_MS = 12000;
@@ -40,11 +41,18 @@ const objectPayload = z.preprocess(
 const emptySchema = objectPayload;
 
 const riskSchema = z.preprocess(
-  (value) => (value && typeof value === "object" ? value : {}),
+  (value) => {
+    const payload = value && typeof value === "object" ? value : {};
+    const rawRisk = payload.risk_level ?? payload.risk ?? payload.level ?? null;
+    const normalizedRisk =
+      typeof rawRisk === "string" && rawRisk.trim()
+        ? `${rawRisk.trim()[0]?.toUpperCase() || ""}${rawRisk.trim().slice(1).toLowerCase()}`
+        : rawRisk;
+    return { ...payload, risk_level: normalizedRisk };
+  },
   z
     .object({
-      risk_level: z.enum(["Mild", "Moderate", "Critical"]).optional(),
-      input: z.string().nullable().optional(), // fallback for LLM
+      risk_level: z.enum(["Mild", "Moderate", "Critical"]),
     })
     .passthrough()
 );
@@ -129,8 +137,7 @@ export const setRiskLevelTool = tool(
     try {
       const { consultationId, userId } = getRuntimeIds(config);
 
-      // Accept both risk_level and input parameter names for flexibility
-      let risk = args?.risk_level || args?.input;
+      let risk = args?.risk_level;
 
       // If risk is a JSON string, parse it
       if (typeof risk === "string" && risk.includes("{")) {
@@ -309,5 +316,6 @@ export const tools = [
   setRiskLevelTool,
   recommendOTCTool,
   calculateRiskTool,
-  consultationDataTool
+  consultationDataTool,
+  retrieveMedicalKnowledgeTool
 ];
