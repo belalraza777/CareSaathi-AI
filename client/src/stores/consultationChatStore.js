@@ -1,23 +1,50 @@
 import { create } from "zustand";
-import { chatWithConsultation, getConsultationMessages } from "../api/consultationApi";
+import { chatWithConsultation, getConsultationDetail, getConsultationMessages } from "../api/consultationApi";
 
 export const useConsultationChatStore = create((set, get) => ({
-    chatMessage: "",
-    messages: [],
+    chatMessage: "", // Current input value for the chat message.
+    messages: [],   // Array of message objects in the current consultation chat.
+    consultationData: null,
     loadingChat: false,
     loadingHistory: true,
+    loadingConsultationData: false,
     error: "",
+    // Action to update the current chat message input.
     setChatMessage: (value) => set({ chatMessage: value }),
     clearError: () => set({ error: "" }),
+    // Reset chat state to initial values, typically when starting a new consultation or if consultation ID is cleared.
     resetChatState: () => {
         set({
             chatMessage: "",
             messages: [],
+            consultationData: null,
             loadingChat: false,
             loadingHistory: true,
+            loadingConsultationData: false,
             error: "",
         });
     },
+    // Load consultation detail payload for current consultation session.
+    loadConsultationData: async (consultationId) => {
+        if (!consultationId) {
+            set({ consultationData: null, loadingConsultationData: false, error: "Consultation ID is required" });
+            return;
+        }
+
+        set({ loadingConsultationData: true, error: "" });
+        const result = await getConsultationDetail(consultationId);
+        if (result.success) {
+            set({ consultationData: result.data || null, loadingConsultationData: false });
+            return;
+        }
+
+        set({
+            consultationData: null,
+            error: result.message || "Failed to load consultation details",
+            loadingConsultationData: false,
+        });
+    },
+    // Load message history for a given consultation ID; handles loading state and errors.
     loadMessageHistory: async (consultationId) => {
         if (!consultationId) {
             set({ loadingHistory: false, error: "Consultation ID is required" });

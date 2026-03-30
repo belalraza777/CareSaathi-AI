@@ -183,57 +183,94 @@ export const setRiskLevelTool = tool(
 // -------------------------
 // Tool 3: Recommend OTC Medicine (with FDA API)
 // -------------------------
+
 export const recommendOTCTool = tool(
   async (args) => {
     try {
-      const raw =
-        args?.symptom ||
-        args?.input ||
-        "";
-
-      const cleanSymptom = String(raw)
+      const rawInput = String(args?.symptom || args?.input || "")
         .toLowerCase()
         .replace(/[^a-z\s]/g, "")
         .trim();
 
-      if (!cleanSymptom) {
+      if (!rawInput) {
         return JSON.stringify({
           error: "No symptom provided",
-          fallback: [],
         });
       }
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), FDA_TIMEOUT_MS);
+      const timeout = setTimeout(() => controller.abort(), 5000);
 
+      //  Search symptom in indications
       const res = await fetch(
-        `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(
-          cleanSymptom
-        )}&limit=1`,
+        `https://api.fda.gov/drug/label.json?search=indications_and_usage:${encodeURIComponent(
+          rawInput
+        )}&limit=5`,
         { signal: controller.signal }
       );
 
       clearTimeout(timeout);
 
-      // Extract clean medicine data from FDA API response
-      const data = await res.json();
-      const result = data.results?.[0] || {};
+      if (!res.ok) {
+        throw new Error(`FDA API error: ${res.status}`);
+      }
 
-      return JSON.stringify({
-        symptom: cleanSymptom,
-        medicines: result.openfda?.generic_name?.length
-          ? result.openfda.generic_name.slice(0, 3) // Top 3 medicines only
-          : [], // Fallback for common symptoms
-        dosage_info: result.dosage_and_administration?.[0]?.substring(0, 150) || "",
-      }, null, 2);
+      const data = await res.json();
+
+      // Extract candidate medicines
+      const candidates =
+        data.results
+          ?.map((r) => ({
+            name: r.openfda?.generic_name?.[0],
+            dosage: r.dosage_and_administration?.[0],
+            warnings: r.warnings?.[0],
+          }))
+          .filter((r) => r.name) || [];
+
+      // Smart filtering (NO hardcoded medicines)
+      const cleaned = candidates
+        .map((c) => ({
+          ...c,
+          name: c.name.split(",")[0].trim(), // take first compound
+        }))
+        .filter((c) =>
+          // remove suspicious long/complex drug names
+          c.name.length < 40 &&
+          !c.name.match(/\d|hydrochloride|tartrate/i)
+        );
+
+      // Pick BEST (first clean result)
+      const best = cleaned[0];
+
+      if (!best) {
+        return JSON.stringify({
+          symptom: rawInput,
+          error: "No suitable medicine found from FDA",
+        });
+      }
+
+      return JSON.stringify(
+        {
+          symptom: rawInput,
+          medicine: best.name,
+          dosage: best.dosage?.substring(0, 200) || "No dosage info",
+          warnings: best.warnings?.substring(0, 200) || "No warnings",
+          source: "FDA",
+        },
+        null,
+        2
+      );
     } catch (error) {
-      throw new Error(`Failed to fetch medicine recommendation: ${error.message}`);
+      return JSON.stringify({
+        error: "FDA fetch failed",
+        message: error.message,
+      });
     }
   },
   {
-    name: "recommend_safe_otc",
+    name: "recommend_fda_medicine",
     description:
-      "REQUIRED: Get safe OTC medicine recommendations for symptoms. Call for suggest medicines. Provides FDA data and safe dosages. Only one symptom at a time and for multiple symptoms, call separately.",
+      "Get ONE medicine suggestion directly from FDA data for a symptom. Use Medicine info smartly. If Medicine is not matching symptom or dangerous , please suggest normal home care. Always try to find a medicine from FDA, but if the symptom is vague or no good match is found, it's safer to recommend home care or doctor visit instead of guessing a medicine. Only return ONE recommendation and make sure it's a good match for the symptom.",
     schema: medicineSchema,
   }
 );

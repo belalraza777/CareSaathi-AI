@@ -9,15 +9,10 @@ function Consultation() {
     const { consultationId: routeConsultationId } = useParams();
     const activeConsultationId = routeConsultationId || "";
 
-    const chatMessage = useConsultationChatStore((state) => state.chatMessage);
-    const messages = useConsultationChatStore((state) => state.messages);
-    const loadingChat = useConsultationChatStore((state) => state.loadingChat);
-    const loadingHistory = useConsultationChatStore((state) => state.loadingHistory);
-    const chatError = useConsultationChatStore((state) => state.error);
-    const setChatMessage = useConsultationChatStore((state) => state.setChatMessage);
-    const loadMessageHistory = useConsultationChatStore((state) => state.loadMessageHistory);
-    const sendMessage = useConsultationChatStore((state) => state.sendMessage);
-    const resetChatState = useConsultationChatStore((state) => state.resetChatState);
+    const { chatMessage, messages, loadingChat, loadingHistory, error: chatError
+        , setChatMessage, loadConsultationData, consultationData, loadingConsultationData, loadMessageHistory, sendMessage, resetChatState
+    } = useConsultationChatStore();
+
 
     useEffect(() => {
         // Keep chat state in sync with consultation id from the route.
@@ -25,27 +20,55 @@ function Consultation() {
             resetChatState();
             return;
         }
+        loadConsultationData(routeConsultationId);
         loadMessageHistory(routeConsultationId);
-    }, [routeConsultationId, loadMessageHistory, resetChatState]);
+    }, [routeConsultationId, loadConsultationData, loadMessageHistory, resetChatState]);
 
     // Trim chat message to prevent sending messages with only whitespace.
     const trimmedChatMessage = useMemo(() => chatMessage.trim(), [chatMessage]);
 
     //Handle send message action; memoize to avoid unnecessary re-renders of ConsultationChat component.
-    const handleSendMessage = useCallback(async (e) => {
-        e.preventDefault();
-        await sendMessage(activeConsultationId, trimmedChatMessage);
+    const handleSendMessage = useCallback(async (e, messageOverride = "") => {
+        // Accept both form submit events and direct programmatic calls (voice flow).
+        e?.preventDefault?.();
+        const safeMessage = (messageOverride || trimmedChatMessage).trim();
+        const res = await sendMessage(activeConsultationId, safeMessage);
+        if (!res.success && !res.skipped) {
+            alert(res.message || "Failed to send message");
+        }
+        return res?.assistantMessage || "no response";
+        
     }, [activeConsultationId, trimmedChatMessage, sendMessage]);
-
 
     return (
         <div className="consultation-page">
             <h2>Consultation</h2>
+            <section className="consultation-card">
+                <h3>Consultation Details</h3>
+                {loadingConsultationData ? (
+                    <p>Loading consultation details...</p>
+                ) : (
+                    <div className="consultation-detail-grid">
+                        <p><strong>Consultation ID:</strong> {consultationData?.consultationId || activeConsultationId || "n/a"}</p>
+                        <p><strong>Main Symptoms:</strong> {consultationData?.mainSymptom?.length ? consultationData.mainSymptom.join(", ") : "n/a"}</p>
+                        <p><strong>Extracted Symptoms:</strong> {consultationData?.symptom?.length ? consultationData.symptom.join(", ") : "n/a"}</p>
+                        <p><strong>Duration:</strong> {consultationData?.symptomDuration || "n/a"}</p>
+                        <p><strong>Risk Level:</strong> {consultationData?.riskLevel || "n/a"}</p>
+                        <p><strong>Severity:</strong> {consultationData?.severity || "n/a"}</p>
+                        <p><strong>Notes:</strong> {consultationData?.notes || "n/a"}</p>
+                        <p><strong>Created At:</strong> {consultationData?.createdAt ? new Date(consultationData.createdAt).toLocaleString() : "n/a"}</p>
+                    </div>
+                )}
+            </section>
+
             <div className="consultation-grid">
                 <section className="consultation-card">
                     <h3>1. Talk</h3>
                     <p>Voice flow is paused for now. Continue your consultation using chat.</p>
-                    <VoiceChat />
+                    <VoiceChat
+                        setChatMessage={setChatMessage}
+                        onSendMessage={handleSendMessage}
+                    />
                 </section>
 
                 <section className="consultation-card">

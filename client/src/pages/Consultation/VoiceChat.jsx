@@ -5,7 +5,7 @@ import {
 } from "./sstService.js";
 import { speakText } from "./ttsService.js";
 
-export default function VoiceChat({}) {
+export default function VoiceChat({ setChatMessage, onSendMessage }) {
   const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
   const [text, setText] = useState("");
@@ -27,11 +27,22 @@ export default function VoiceChat({}) {
         mediaRecorderRef,
         audioChunks
       );
-      setText(result);
-      await speakText(result);
-    } finally {
+      if (!result || result.trim() === "") {
+        setText("No speech detected. Please try again.");
+        return;
+      }
+      setChatMessage(result);
+      const assistantMessage = await onSendMessage(undefined, result);
+      setText(assistantMessage);
+      await speakText(assistantMessage);
+    }
+    catch (error) {
+      console.error("Error processing voice input:", error);
+    }
+    finally {
       // Mark processing complete
       setIsProcessing(false);
+      setChatMessage("");
     }
   };
 
@@ -41,12 +52,12 @@ export default function VoiceChat({}) {
 
       <div>
         <button onClick={handleStart} disabled={isListening || isProcessing}>
-          {isListening ? "🎙️ Listening..." : "Start"}
+          {isListening ? " Listening..." : "Start"}
         </button>
       </div>
       <div>
         <button onClick={handleStop} disabled={!isListening || isProcessing}>
-          {isProcessing ? "⏳ Processing..." : "Stop"}
+          {isProcessing ? " Processing..." : "Stop"}
         </button>
       </div>
       <p>{text}</p>

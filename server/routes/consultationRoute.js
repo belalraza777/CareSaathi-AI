@@ -19,6 +19,8 @@ router.post(
 );
 // Get all consultations for authenticated user
 router.get("/", verifyToken, asyncWrapper(consultationController.getUserConsultations));
+// Get details for a specific consultation
+router.get("/:consultationId", verifyToken, asyncWrapper(consultationController.getConsultationDetail));
 // Get message history for a specific consultation
 router.get("/:consultationId/messages", verifyToken, asyncWrapper(consultationController.getConsultationMessages));
 

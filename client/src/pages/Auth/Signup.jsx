@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
+import { useNavigate } from "react-router-dom";
 
 // Manages signup form state and sends registration data through auth context.
 const Signup = () => {
 	const { handleRegister } = useAuth();
+	const navigate = useNavigate();
 
 	const [form, setForm] = useState({
 		name: "",
@@ -28,6 +30,7 @@ const Signup = () => {
 
 		if (result.success) {
 			setMessage(result.message || "Account created successfully");
+			navigate("/profile");
 		} else {
 			setMessage(result.message || "Signup failed");
 		}

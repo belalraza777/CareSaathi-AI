@@ -78,6 +78,17 @@
     margin-bottom: 10px;
 }
 
+.consultation-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+}
+
+.consultation-detail-grid p {
+    margin: 0;
+    word-break: break-word;
+}
+
 /* Keeps buttons and errors visually consistent across consultation pages. */
 .consultation-error {
     color: #b42318;
@@ -103,6 +114,10 @@
     }
 
     .consultation-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .consultation-detail-grid {
         grid-template-columns: 1fr;
     }
 

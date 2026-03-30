@@ -47,46 +47,46 @@ const createConsultation = async (req, res) => {
 
 // Chat endpoint: get agent response and extract symptoms from message
 const chatConsultation = async (req, res) => {
-        const consultationId = req.params.consultationId || req.body.consultationId;
-        const { message } = req.body;
+    const consultationId = req.params.consultationId || req.body.consultationId;
+    const { message } = req.body;
 
-        // Validate consultationId format before querying
-        if (!consultationId || !mongoose.Types.ObjectId.isValid(consultationId)) {
-            return res.status(400).json({ success: false, message: "Invalid consultation ID format" });
-        }
+    // Validate consultationId format before querying
+    if (!consultationId || !mongoose.Types.ObjectId.isValid(consultationId)) {
+        return res.status(400).json({ success: false, message: "Invalid consultation ID format" });
+    }
 
-        // Verify consultation belongs to authenticated user
-        let consultation = await Consultation.findOne({
-            consultationId: new mongoose.Types.ObjectId(consultationId),
-            userId: new mongoose.Types.ObjectId(req.user.id),
-        });
+    // Verify consultation belongs to authenticated user
+    let consultation = await Consultation.findOne({
+        consultationId: new mongoose.Types.ObjectId(consultationId),
+        userId: new mongoose.Types.ObjectId(req.user.id),
+    });
 
-        if (!consultation) {
-            return res.status(404).json({ success: false, message: "Consultation not found" });
-        }
+    if (!consultation) {
+        return res.status(404).json({ success: false, message: "Consultation not found" });
+    }
 
-        // Get agent response and extracted symptoms
-        const response = await handleUserMessage({
-            consultationId,
-            userId: req.user.id,
-            message,
-        });
-        const safeResponse = typeof response === "string" ? response : JSON.stringify(response);
+    // Get agent response and extracted symptoms
+    const response = await handleUserMessage({
+        consultationId,
+        userId: req.user.id,
+        message,
+    });
+    const safeResponse = typeof response === "string" ? response : JSON.stringify(response);
 
-        // Store user and assistant messages in history
-        await storeMessage(consultationId, "user", message);
-        await storeMessage(consultationId, "assistant", safeResponse); // Persist exactly what we return to client.
+    // Store user and assistant messages in history
+    await storeMessage(consultationId, "user", message);
+    await storeMessage(consultationId, "assistant", safeResponse); // Persist exactly what we return to client.
 
-    
-        return res.status(200).json({
-            success: true,
-            response: safeResponse,
-            data: {
-                symptoms: consultation.symptom || [],
-                riskLevel: consultation.riskLevel || "Mild",
-            },
-        });
-    
+
+    return res.status(200).json({
+        success: true,
+        response: safeResponse,
+        data: {
+            symptoms: consultation.symptom || [],
+            riskLevel: consultation.riskLevel || "Mild",
+        },
+    });
+
 };
 
 // Fetch all consultations for authenticated user sorted by newest first
@@ -94,7 +94,7 @@ const getUserConsultations = async (req, res) => {
     const consultations = await Consultation.find({ userId: new mongoose.Types.ObjectId(req.user.id) })
         .sort({ createdAt: -1 })
         .select("consultationId mainSymptom symptomDuration notes riskLevel severity createdAt");
-    
+
     return res.status(200).json({
         success: true,
         message: "Consultations retrieved successfully",
@@ -133,4 +133,21 @@ const getConsultationMessages = async (req, res) => {
     });
 };
 
-export default { createConsultation, chatConsultation, getUserConsultations, getConsultationMessages };
+//Fetch all detail of a specific consultation with ownership validation
+const getConsultationDetail = async (req, res) => {
+    const { consultationId } = req.params;
+    const consultation = await Consultation.findOne({
+        consultationId: new mongoose.Types.ObjectId(consultationId),
+        userId: new mongoose.Types.ObjectId(req.user.id),
+    }).lean();
+    if (!consultation) {
+        return res.status(404).json({ success: false, message: "Consultation not found" });
+    }
+    return res.status(200).json({
+        success: true,
+        message: "Consultation details retrieved successfully",
+        data: consultation,
+    });
+};
+
+export default { createConsultation, chatConsultation, getUserConsultations, getConsultationMessages, getConsultationDetail };

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
+import { useNavigate } from "react-router-dom";
 
 // Manages login form state and submits credentials through auth context.
 const Login = () => {
 	const { handleLogin } = useAuth();
+	const navigate = useNavigate();
 
 	const [form, setForm] = useState({
 		email: "",
@@ -27,6 +29,7 @@ const Login = () => {
 
 		if (result.success) {
 			setMessage(result.message || "Login successful");
+			navigate("/");
 		} else {
 			setMessage(result.message || "Login failed");
 		}
