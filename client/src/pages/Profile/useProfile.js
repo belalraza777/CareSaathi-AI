@@ -1,52 +1,34 @@
-import { useState, useEffect } from "react";
-import { getProfile, createProfile, updateProfile } from "../../api/profileApi";
+import { useEffect } from "react";
+import { useProfileStore } from "../../stores/profileStore";
 
 // Simple hook to manage profile API operations
 const useProfile = () => {
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const profile = useProfileStore((state) => state.profile);
+    const loading = useProfileStore((state) => state.loading);
+    const error = useProfileStore((state) => state.error);
+    const isEditing = useProfileStore((state) => state.isEditing);
+    const setError = useProfileStore((state) => state.setError);
+    const setIsEditing = useProfileStore((state) => state.setIsEditing);
+    const loadProfile = useProfileStore((state) => state.loadProfile);
+    const createProfileData = useProfileStore((state) => state.createProfileData);
+    const updateProfileData = useProfileStore((state) => state.updateProfileData);
 
     // Fetch profile on mount
     useEffect(() => {
-        const fetch = async () => {
-            const result = await getProfile();
-            if (result.success) {
-                setProfile(result.data);
-            } else {
-                setProfile(null);
-                setError(result.message);
-            }
-            setLoading(false);
-        };
-        fetch();
-    }, []);
+        loadProfile();
+    }, [loadProfile]);
 
-    // Create profile
-    const create = async (data) => {
-        const result = await createProfile(data);
-        if (result.success) {
-            setProfile(result.data);
-            setError(null);
-        } else {
-            setError(result.message);
-        }
-        return result;
+    // The hook keeps the existing component API but delegates state to Zustand.
+    return {
+        profile,
+        loading,
+        error,
+        isEditing,
+        setError,
+        setIsEditing,
+        create: createProfileData,
+        update: updateProfileData,
     };
-
-    // Update profile
-    const update = async (data) => {
-        const result = await updateProfile(data);
-        if (result.success) {
-            setProfile(result.data);
-            setError(null);
-        } else {
-            setError(result.message);
-        }
-        return result;
-    };
-
-    return { profile, loading, error, setError, create, update };
 };
 
 export default useProfile;

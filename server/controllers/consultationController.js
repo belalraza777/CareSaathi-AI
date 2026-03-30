@@ -89,4 +89,48 @@ const chatConsultation = async (req, res) => {
     
 };
 
-export default { createConsultation, chatConsultation };
+// Fetch all consultations for authenticated user sorted by newest first
+const getUserConsultations = async (req, res) => {
+    const consultations = await Consultation.find({ userId: new mongoose.Types.ObjectId(req.user.id) })
+        .sort({ createdAt: -1 })
+        .select("consultationId mainSymptom symptomDuration notes riskLevel severity createdAt");
+    
+    return res.status(200).json({
+        success: true,
+        message: "Consultations retrieved successfully",
+        data: consultations,
+    });
+};
+
+// Fetch all messages for a specific consultation with ownership validation
+const getConsultationMessages = async (req, res) => {
+    const { consultationId } = req.params;
+
+    // Validate consultationId format before querying
+    if (!consultationId || !mongoose.Types.ObjectId.isValid(consultationId)) {
+        return res.status(400).json({ success: false, message: "Invalid consultation ID format" });
+    }
+
+    // Verify consultation belongs to authenticated user before returning messages
+    const consultation = await Consultation.findOne({
+        consultationId: new mongoose.Types.ObjectId(consultationId),
+        userId: new mongoose.Types.ObjectId(req.user.id),
+    });
+
+    if (!consultation) {
+        return res.status(404).json({ success: false, message: "Consultation not found" });
+    }
+
+    // Fetch all messages for this consultation sorted by timeline
+    const messages = await Message.find({ consultationId: new mongoose.Types.ObjectId(consultationId) })
+        .sort({ timestamp: 1 })
+        .select("role message timestamp");
+
+    return res.status(200).json({
+        success: true,
+        message: "Messages retrieved successfully",
+        data: messages,
+    });
+};
+
+export default { createConsultation, chatConsultation, getUserConsultations, getConsultationMessages };

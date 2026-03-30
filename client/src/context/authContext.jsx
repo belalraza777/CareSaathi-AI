@@ -1,5 +1,5 @@
 // authContext.jsx - Global authentication state management
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { register, login, logout, checkAuth, resetPassword } from "../api/authApi";
 
 // Create auth context for sharing auth state across components
@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     // Save user data to state and localStorage
-    const saveAuthData = (userData) => {
+    const saveAuthData = useCallback((userData) => {
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         // Token is stored in httpOnly cookie by backend
@@ -21,15 +21,15 @@ export const AuthProvider = ({ children }) => {
         if (tokenFromStorage) {
             setToken(tokenFromStorage);
         }
-    };
+    }, []);
 
     // Clear all auth data on logout
-    const clearAuthData = () => {
+    const clearAuthData = useCallback(() => {
         setUser(null);
         setToken(null);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-    };
+    }, []);
 
     // Check if user is authenticated on app load
     useEffect(() => {
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         };
         checkUser();
-    }, []);
+    }, [saveAuthData, clearAuthData]);
 
     // Connect/disconnect socket based on token
     // useEffect(() => {
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     // }, [token]);
 
     // Handle user login
-    const handleLogin = async (credentials) => {
+    const handleLogin = useCallback(async (credentials) => {
         const result = await login(credentials);
         if (result.success) {
             localStorage.setItem("token", "cookie-auth");
@@ -72,10 +72,10 @@ export const AuthProvider = ({ children }) => {
             setError(result.message || "Login failed");
         }
         return result;
-    };
+    }, [saveAuthData]);
 
     // Refresh user data from server
-    const refreshUser = async () => {
+    const refreshUser = useCallback(async () => {
         const result = await checkAuth();
         if (result.success && result.authenticated) {
             saveAuthData(result.data);
@@ -85,10 +85,10 @@ export const AuthProvider = ({ children }) => {
             clearAuthData();
             return { success: false };
         }
-    };
+    }, [saveAuthData, clearAuthData]);
 
     // Handle new user registration
-    const handleRegister = async (credentials) => {
+    const handleRegister = useCallback(async (credentials) => {
         const result = await register(credentials);
         if (result.success) {
             localStorage.setItem("token", "cookie-auth");
@@ -98,37 +98,40 @@ export const AuthProvider = ({ children }) => {
             setError(result.message || "Registration failed");
         }
         return result;
-    };
+    }, [saveAuthData]);
 
     // Handle user logout
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         const result = await logout();
         clearAuthData();
         return result;
-    };
+    }, [clearAuthData]);
 
     // Handle password reset
-    const handleResetPassword = async (passwordData) => {
+    const handleResetPassword = useCallback(async (passwordData) => {
         const result = await resetPassword(passwordData);
         if (!result.success) {
             setError(result.message || "Password reset failed");
         }
         return result;
-    };
+    }, []);
+
+    // Memoize provider value to avoid re-rendering all consumers on every parent render.
+    const authValue = useMemo(() => ({
+        user,
+        token,
+        loading,
+        isAuthenticated: !!user,
+        handleLogin,
+        handleRegister,
+        handleLogout,
+        handleResetPassword,
+        refreshUser
+    }), [user, token, loading, handleLogin, handleRegister, handleLogout, handleResetPassword, refreshUser]);
 
     // Provide auth state and functions to children
     return (
-        <AuthContext.Provider value={{
-            user,
-            token,
-            loading,
-            isAuthenticated: !!user,
-            handleLogin,
-            handleRegister,
-            handleLogout,
-            handleResetPassword,
-            refreshUser
-        }}>
+        <AuthContext.Provider value={authValue}>
             {/* Only render children after loading is complete */}
             {!loading && children}
         </AuthContext.Provider>

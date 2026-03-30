@@ -1,0 +1,112 @@
+.consultation-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.consultation-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.consultation-header h1 {
+    width: 100%;
+    margin: 0;
+}
+
+.consultation-card {
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.consultation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.consultation-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.consultation-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.consultation-input,
+.consultation-textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cfcfcf;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.consultation-textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.consultation-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}
+
+.consultation-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.consultation-chat-box {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    padding: 10px;
+    min-height: 180px;
+    margin-bottom: 10px;
+}
+
+/* Keeps buttons and errors visually consistent across consultation pages. */
+.consultation-error {
+    color: #b42318;
+    margin-bottom: 10px;
+}
+
+.consultation-button {
+    padding: 8px 12px;
+    border: 1px solid #bfbfbf;
+    border-radius: 6px;
+    background: #f7f7f7;
+    cursor: pointer;
+}
+
+.consultation-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .consultation-page {
+        padding: 12px;
+    }
+
+    .consultation-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .consultation-row {
+        flex-direction: column;
+    }
+}

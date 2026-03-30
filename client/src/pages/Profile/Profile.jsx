@@ -1,16 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/authContext";
 import useProfile from "./useProfile";
 import useProfileForm from "./useProfileForm";
 import ProfileView from "./ProfileView";
 import ProfileForm from "./ProfileForm";
 
 function Profile() {
-    const navigate = useNavigate();
-    const { user, handleLogout } = useAuth();
-    const { profile, loading, error, setError, create, update } = useProfile();
-    const [isEditing, setIsEditing] = useState(false);
+    const { profile, loading, error, isEditing, setIsEditing, create, update } = useProfile();
     const { formData, tempInput, handleInputChange, handleArrayInputChange, addArrayItem, removeArrayItem } = useProfileForm(profile);
 
     // Handle submit
@@ -40,12 +34,7 @@ function Profile() {
 
     return (
         <div>
-            <header>
-                <h1>My Profile</h1>
-                <p>Welcome, {user?.name || user?.email}</p>
-                <button onClick={() => navigate("/")}>← Back</button>
-                <button onClick={handleLogout}>Logout</button>
-            </header>
+            <h2>My Profile</h2>
 
             {error && !isEditing && <div style={{ color: "red" }}>{error}</div>}
 
