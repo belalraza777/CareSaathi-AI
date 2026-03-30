@@ -53,6 +53,10 @@ function Consultation() {
                         <p><strong>Main Symptoms:</strong> {consultationData?.mainSymptom?.length ? consultationData.mainSymptom.join(", ") : "n/a"}</p>
                         <p><strong>Extracted Symptoms:</strong> {consultationData?.symptom?.length ? consultationData.symptom.join(", ") : "n/a"}</p>
                         <p><strong>Duration:</strong> {consultationData?.symptomDuration || "n/a"}</p>
+                        <p><strong>Gender:</strong> {consultationData?.gender || "n/a"}</p>
+                        <p><strong>Age:</strong> {consultationData?.age ?? "n/a"}</p>
+                        <p><strong>Height:</strong> {consultationData?.height ?? "n/a"}{consultationData?.height ? " cm" : ""}</p>
+                        <p><strong>Weight:</strong> {consultationData?.weight ?? "n/a"}{consultationData?.weight ? " kg" : ""}</p>
                         <p><strong>Risk Level:</strong> {consultationData?.riskLevel || "n/a"}</p>
                         <p><strong>Severity:</strong> {consultationData?.severity || "n/a"}</p>
                         <p><strong>Notes:</strong> {consultationData?.notes || "n/a"}</p>

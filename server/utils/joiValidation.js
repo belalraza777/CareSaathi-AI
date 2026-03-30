@@ -164,6 +164,41 @@ const consultationSchema = Joi.object({
         .messages({
             "string.max": "notes is too long",
         }),
+
+    gender: Joi.string()
+        .valid("Male", "Female", "Other")
+        .messages({
+            "any.only": "gender must be Male, Female, or Other",
+        }),
+
+    age: Joi.number()
+        .integer()
+        .min(0)
+        .max(120)
+        .messages({
+            "number.base": "age must be a number",
+            "number.integer": "age must be a whole number",
+            "number.min": "age cannot be negative",
+            "number.max": "age cannot be greater than 120",
+        }),
+
+    height: Joi.number()
+        .min(30)
+        .max(300)
+        .messages({
+            "number.base": "height must be a number",
+            "number.min": "height must be at least 30 cm",
+            "number.max": "height must be at most 300 cm",
+        }),
+
+    weight: Joi.number()
+        .min(1)
+        .max(500)
+        .messages({
+            "number.base": "weight must be a number",
+            "number.min": "weight must be at least 1 kg",
+            "number.max": "weight must be at most 500 kg",
+        }),
 });
 
 

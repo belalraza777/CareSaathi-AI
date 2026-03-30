@@ -20,15 +20,19 @@ const storeMessage = async (consultationId, role, message) => {
 };
 
 // Create a new consultation session
-//req.body: { mainSymptom[], symptomDuration, notes }
+// req.body: { mainSymptom[], symptomDuration, notes, gender?, age?, height?, weight? }
 const createConsultation = async (req, res) => {
-    const { mainSymptom, symptomDuration, notes } = req.body;
+    const { mainSymptom, symptomDuration, notes, gender, age, height, weight } = req.body;
 
     const consultation = await Consultation.create({
         userId: req.user.id,
         mainSymptom: mainSymptom || [],
         symptomDuration,
         notes: notes || "",
+        gender: typeof gender === "string" ? gender : null,
+        age: typeof age === "number" ? age : null,
+        height: typeof height === "number" ? height : null,
+        weight: typeof weight === "number" ? weight : null,
         symptom: Array.isArray(mainSymptom) ? [...mainSymptom] : [],
     });
 
@@ -40,6 +44,10 @@ const createConsultation = async (req, res) => {
             mainSymptom: consultation.mainSymptom,
             symptomDuration: consultation.symptomDuration,
             notes: consultation.notes,
+            gender: consultation.gender,
+            age: consultation.age,
+            height: consultation.height,
+            weight: consultation.weight,
         },
     });
 };
@@ -93,7 +101,7 @@ const chatConsultation = async (req, res) => {
 const getUserConsultations = async (req, res) => {
     const consultations = await Consultation.find({ userId: new mongoose.Types.ObjectId(req.user.id) })
         .sort({ createdAt: -1 })
-        .select("consultationId mainSymptom symptomDuration notes riskLevel severity createdAt");
+        .select("consultationId mainSymptom symptomDuration notes gender age height weight riskLevel severity createdAt");
 
     return res.status(200).json({
         success: true,

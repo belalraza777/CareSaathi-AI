@@ -28,6 +28,29 @@ const consultationSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      default: null,
+    },
+    age: {
+      type: Number,
+      min: 0,
+      max: 120,
+      default: null,
+    },
+    height: {
+      type: Number,
+      min: 30,
+      max: 300,
+      default: null,
+    },
+    weight: {
+      type: Number,
+      min: 1,
+      max: 500,
+      default: null,
+    },
     symptom: {
       type: [String],
       default: [],

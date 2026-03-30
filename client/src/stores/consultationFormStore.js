@@ -1,11 +1,25 @@
 import { create } from "zustand";
 import { createConsultation } from "../api/consultationApi";
 
+const parseOptionalNumber = (value) => {
+    const normalized = String(value ?? "").trim();
+    if (!normalized) {
+        return undefined;
+    }
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 const initialForm = {
     mainSymptom: [],
     mainSymptomInput: "",
     symptomDuration: "",
     notes: "",
+    gender: "",
+    age: "",
+    height: "",
+    weight: "",
 };
 
 export const useConsultationFormStore = create((set, get) => ({
@@ -52,6 +66,10 @@ export const useConsultationFormStore = create((set, get) => ({
             mainSymptom: consultationForm.mainSymptom,
             symptomDuration: consultationForm.symptomDuration,
             notes: consultationForm.notes,
+            gender: consultationForm.gender || undefined,
+            age: parseOptionalNumber(consultationForm.age),
+            height: parseOptionalNumber(consultationForm.height),
+            weight: parseOptionalNumber(consultationForm.weight),
         };
 
         const result = await createConsultation(payload);

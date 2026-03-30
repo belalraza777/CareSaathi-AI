@@ -80,6 +80,67 @@ function NewConsultation() {
                     </div>
 
                     <div className="consultation-field">
+                        <label htmlFor="gender">Gender</label>
+                        <select
+                            className="consultation-input"
+                            id="gender"
+                            name="gender"
+                            value={consultationForm.gender}
+                            onChange={handleConsultationInputChange}
+                        >
+                            <option value="">Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div className="consultation-field">
+                        <label htmlFor="age">Age</label>
+                        <input
+                            className="consultation-input"
+                            id="age"
+                            name="age"
+                            type="number"
+                            min="0"
+                            max="120"
+                            value={consultationForm.age}
+                            onChange={handleConsultationInputChange}
+                            placeholder="e.g. 28"
+                        />
+                    </div>
+
+                    <div className="consultation-field">
+                        <label htmlFor="height">Height (cm)</label>
+                        <input
+                            className="consultation-input"
+                            id="height"
+                            name="height"
+                            type="number"
+                            min="30"
+                            max="300"
+                            value={consultationForm.height}
+                            onChange={handleConsultationInputChange}
+                            placeholder="e.g. 170"
+                        />
+                    </div>
+
+                    <div className="consultation-field">
+                        <label htmlFor="weight">Weight (kg)</label>
+                        <input
+                            className="consultation-input"
+                            id="weight"
+                            name="weight"
+                            type="number"
+                            min="1"
+                            max="500"
+                            value={consultationForm.weight}
+                            onChange={handleConsultationInputChange}
+                            placeholder="e.g. 65"
+                        />
+                    </div>
+
+                    <div className="consultation-field">
                         <label htmlFor="notes">Notes</label>
                         <textarea
                             className="consultation-textarea"

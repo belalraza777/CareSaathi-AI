@@ -84,37 +84,57 @@ const calculateRiskSchema = z.preprocess(
 export const getPatientProfileTool = tool(
   async (_, config) => {
     try {
-      const { userId } = getRuntimeIds(config);
+      const { userId, consultationId } = getRuntimeIds(config);
 
       if (!isValidObjectId(userId)) {
         return JSON.stringify({ error: "Session missing" });
       }
 
-      const profile = await Profile.findOne({ user: toObjectId(userId) })
-        .lean()
-        .select({
-          allergies: 1,
-          medicalHistory: 1,
-          age: 1,
-          gender: 1,
-        });
+      const [profile, consultation] = await Promise.all([
+        Profile.findOne({ user: toObjectId(userId) })
+          .lean()
+          .select({
+            allergies: 1,
+            medicalHistory: 1,
+            age: 1,
+            height: 1,
+            weight: 1,
+            gender: 1,
+          }),
+        isValidObjectId(consultationId)
+          ? Consultation.findOne({
+            consultationId: toObjectId(consultationId),
+            userId: toObjectId(userId),
+          })
+            .lean()
+            .select({ age: 1, height: 1, weight: 1, gender: 1 })
+          : Promise.resolve(null),
+      ]);
 
-      if (!profile) {
-        // No profile found - return sensible defaults
+      if (!profile && !consultation) {
         return JSON.stringify({
           age: null,
+          height: null,
+          weight: null,
           gender: null,
           allergies: [],
           medicalHistory: [],
-          note: "Profile not yet created",
+          note: "Profile not yet created and consultation vitals not available",
         });
       }
 
+      // Prioritize current consultation vitals, then fallback to profile values.
+      const age = consultation?.age ?? profile?.age ?? null;
+      const height = consultation?.height ?? profile?.height ?? null;
+      const weight = consultation?.weight ?? profile?.weight ?? null;
+
       return JSON.stringify({
-        age: profile.age || null,
-        gender: profile.gender || null,
-        allergies: profile.allergies || [],
-        medicalHistory: profile.medicalHistory || [],
+        age,
+        height,
+        weight,
+        gender: consultation?.gender || profile?.gender || null,
+        allergies: profile?.allergies || [],
+        medicalHistory: profile?.medicalHistory || [],
       });
 
     } catch (err) {
@@ -124,7 +144,7 @@ export const getPatientProfileTool = tool(
   {
     name: "get_patient_profile",
     description:
-      "REQUIRED: Get patient medical profile including age, gender, allergies, and medical history. You MUST call this before recommending ANY medicine or medical advice. Always call this first when patient mentions symptoms. Don't pass any input.",
+      "REQUIRED: Get patient medical profile including age, height, weight, gender, allergies, and medical history. Prioritize consultation vitals first, then fallback to profile vitals if missing. You MUST call this before recommending ANY medicine or medical advice. Always call this first when patient mentions symptoms. Don't pass any input.",
     schema: emptySchema,
   }
 );
