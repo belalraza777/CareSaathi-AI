@@ -75,7 +75,7 @@ const updateProfile = async (req, res, next) => {
     const profile = await Profile.findOneAndUpdate(
         { user: req.user.id },
         req.body,
-        { new: true, runValidators: true }
+        { returnDocument: "after", runValidators: true }
     ).populate("user", "name email");
 
     if (!profile) {

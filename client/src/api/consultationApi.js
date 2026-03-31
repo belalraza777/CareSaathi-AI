@@ -15,7 +15,8 @@ export const createConsultation = async (consultationData) => {
 
 export const chatWithConsultation = async (consultationId, message) => {
     try {
-        const response = await axiosInstance.post(`/consultation/chat/${consultationId}`, { message });
+        // AI responses can take longer than regular CRUD calls, so use a larger timeout here.
+        const response = await axiosInstance.post(`/consultation/chat/${consultationId}`, { message }, { timeout: 60000 });
         return {
             success: true,
             data: response.data.data,
@@ -23,6 +24,12 @@ export const chatWithConsultation = async (consultationId, message) => {
             message: response.data.message,
         };
     } catch (error) {
+        if (error.code === "ECONNABORTED") {
+            return {
+                success: false,
+                message: "AI doctor response timed out. Please try again.",
+            };
+        }
         return {
             success: false,
             message: error.response?.data?.message || 'Failed to send consultation message',

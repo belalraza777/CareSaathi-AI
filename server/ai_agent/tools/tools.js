@@ -96,10 +96,6 @@ export const getPatientProfileTool = tool(
           .select({
             allergies: 1,
             medicalHistory: 1,
-            age: 1,
-            height: 1,
-            weight: 1,
-            gender: 1,
           }),
         isValidObjectId(consultationId)
           ? Consultation.findOne({
@@ -107,7 +103,6 @@ export const getPatientProfileTool = tool(
             userId: toObjectId(userId),
           })
             .lean()
-            .select({ age: 1, height: 1, weight: 1, gender: 1 })
           : Promise.resolve(null),
       ]);
 
@@ -181,7 +176,7 @@ export const setRiskLevelTool = tool(
           userId: toObjectId(userId),
         },
         { riskLevel: String(risk).trim() },
-        { new: true }
+        { returnDocument: "after" }
       );
 
       return updated

@@ -93,6 +93,6 @@ export const useConsultationChatStore = create((set, get) => ({
             loadingChat: false,
             error: result.message || "Failed to send message",
         });
-        return { success: false };
+        return { success: false, message: result.message || "Failed to send message" };
     },
 }));

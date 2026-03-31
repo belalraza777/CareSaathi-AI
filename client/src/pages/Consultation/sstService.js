@@ -48,7 +48,8 @@ export const stopRecordingAndTranscribe = async (
                 // transliterate Hindi to English FIRST, before filtering
                 text = toEnglishLetters(text) || text;
                 
-                resolve(text || "No speech detected");
+                // Return empty text for no-audio cases so caller can skip sending a chat message.
+                resolve(text || "");
             } catch (err) {
                 console.error("STT Error:", err);
                 reject(err.message || "Error transcribing");

@@ -4,6 +4,7 @@ import {
   stopRecordingAndTranscribe,
 } from "./sstService.js";
 import { speakText } from "./ttsService.js";
+import { formatAiResponseForTts } from "./voiceResponseFormatter.js";
 
 export default function VoiceChat({ setChatMessage, onSendMessage }) {
   const mediaRecorderRef = useRef(null);
@@ -27,14 +28,22 @@ export default function VoiceChat({ setChatMessage, onSendMessage }) {
         mediaRecorderRef,
         audioChunks
       );
-      if (!result || result.trim() === "") {
+      const normalizedResult = String(result || "").trim();
+      const isNoSpeechPlaceholder = /^no speech detected\.?$/i.test(normalizedResult);
+
+      if (!normalizedResult || isNoSpeechPlaceholder) {
         setText("No speech detected. Please try again.");
         return;
       }
-      setChatMessage(result);
-      const assistantMessage = await onSendMessage(undefined, result);
-      setText(assistantMessage);
-      await speakText(assistantMessage);
+      setChatMessage(normalizedResult);
+      const assistantMessage = await onSendMessage(undefined, normalizedResult);
+      if (!assistantMessage) {
+        setText("Failed to send message. Please try again.");
+        return;
+      }
+      const ttsFriendlyMessage = formatAiResponseForTts(assistantMessage) || assistantMessage;
+      setText(ttsFriendlyMessage);
+      await speakText(ttsFriendlyMessage);
     }
     catch (error) {
       console.error("Error processing voice input:", error);

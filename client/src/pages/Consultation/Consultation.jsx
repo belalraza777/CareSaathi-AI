@@ -33,10 +33,10 @@ function Consultation() {
         e?.preventDefault?.();
         const safeMessage = (messageOverride || trimmedChatMessage).trim();
         const res = await sendMessage(activeConsultationId, safeMessage);
-        if (!res.success && !res.skipped) {
-            alert(res.message || "Failed to send message");
+        if (!res.success) {
+            return "";
         }
-        return res?.assistantMessage || "no response";
+        return res?.assistantMessage || "";
         
     }, [activeConsultationId, trimmedChatMessage, sendMessage]);
 
