@@ -7,6 +7,7 @@ import Home from "../pages/Home/Home";
 import Profile from "../pages/Profile/Profile";
 import Consultation from "../pages/Consultation/Consultation";
 import NewConsultation from "../pages/Consultation/NewConsultation";
+import OAuthSuccess from "../pages/Auth/Oauth_success";
 
 
 function AppRoutes() {
@@ -23,7 +24,7 @@ function AppRoutes() {
 					path="/profile"
 					element={isAuthenticated ? <Profile /> : <Navigate to="/login" replace />}
 				/>
-	
+
 				<Route
 					path="/consultation/new"
 					element={isAuthenticated ? <NewConsultation /> : <Navigate to="/login" replace />}
@@ -40,6 +41,8 @@ function AppRoutes() {
 					path="/signup"
 					element={isAuthenticated ? <Navigate to="/" replace /> : <Signup />}
 				/>
+				<Route path="/oauth-success" element={<OAuthSuccess />} />
+
 				{/* Keeps unmatched URLs routed through the auth-aware home flow. */}
 				<Route path="*" element={<Navigate to="/" replace />} />
 			</Route>

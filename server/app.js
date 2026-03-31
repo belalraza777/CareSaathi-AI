@@ -5,6 +5,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 
 import authRoutes from './routes/authRoute.js';
+import oauthRoutes from './routes/oauthRoute.js';
 import profileRoutes from './routes/profileRoute.js';
 import consultationRoutes from './routes/consultationRoute.js';
 
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', oauthRoutes);
 app.use('/api/v1/profile', profileRoutes);
 app.use('/api/v1/consultation', consultationRoutes);
 

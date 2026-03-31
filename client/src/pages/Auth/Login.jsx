@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
@@ -37,6 +37,12 @@ const Login = () => {
 		setLoading(false);
 	};
 
+	// Get Google auth URL
+	const googleAuthUrl = useMemo(() => {
+		const base = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+		return `${base.replace(/\/$/, "")}/auth/google`;
+	}, []);
+
 	return (
 		<div>
 			<h2>Login</h2>
@@ -72,7 +78,9 @@ const Login = () => {
 			</form>
 
 			{message && <p>{message}</p>}
-
+			<a href={googleAuthUrl} className="auth-page__btn auth-page__btn--google">
+				Continue with Google
+			</a>
 			<p>
 				Don&apos;t have an account?{" "}
 				<Link to="/signup">Sign up</Link>

@@ -18,10 +18,11 @@ const userSchema = new mongoose.Schema({
     },
     passwordHash: {
         type: String,
-        required: true,
         select: false,
         trim: true,
-    }
+    },
+    provider: { type: String, default: "local" }, // local | google | facebook
+    providerId: { type: String },                 // OAuth provider user id
 }, {
     timestamps: true
 });
