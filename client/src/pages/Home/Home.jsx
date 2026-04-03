@@ -30,20 +30,20 @@ function Home() {
             <p>Manage your medical information and health records in one place.</p>
 
             <div>
-                <h3>📋 My Profile</h3>
+                <h3>My Profile</h3>
                 <p>View and manage your personal health information.</p>
                 <Link to="/profile">Go to Profile</Link>
             </div>
 
             <div>
                 {/* Keeps consultation access visible from dashboard actions. */}
-                <h3>💬 Consultation</h3>
+                <h3>Consultation</h3>
                 <p>Start a consultation and chat with the AI doctor.</p>
                 <Link to="/consultation/new">Start Consultation</Link>
             </div>
 
             <div>
-                <h3>📝 My Consultations</h3>
+                <h3> My Consultations</h3>
                 <p>View your past consultations and chat history.</p>
                 {error && <p style={{ color: "red" }}>{error}</p>}
                 {loadingConsultations ? (

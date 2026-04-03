@@ -7,7 +7,7 @@ function AppHeader() {
     return (
         <header className="app-header">
             <div className="app-header-left">
-                <h1 className="app-brand">AI Doctor</h1>
+                <h1 className="app-brand">CareSaathi AI</h1>
                 {/* Keep top navigation centralized in one shared header. */}
                 <nav className="app-nav" aria-label="Main">
                     {isAuthenticated ? (
