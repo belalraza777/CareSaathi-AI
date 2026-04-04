@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext.jsx';
+import './Oauth_success.css';
 
 
 const OAuthSuccess = () => {
     // Navigation and auth context
     const navigate = useNavigate();
-    const { refreshUser, loading, user } = useAuth();
+    const { refreshUser, loading } = useAuth();
 
     // Handle OAuth callback - fetch user data and redirect
     useEffect(() => {

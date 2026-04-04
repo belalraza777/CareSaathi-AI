@@ -1,0 +1,132 @@
+.profile-view {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+
+.profile-view h3 {
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+.profile-view-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
+	padding: 14px;
+	box-shadow: var(--shadow-soft);
+	backdrop-filter: blur(10px);
+}
+
+.profile-view-card--highlight {
+	background:
+		radial-gradient(800px 280px at 10% 0%, rgba(47, 128, 237, 0.16), transparent 55%),
+		var(--card);
+}
+
+.profile-view-card--medical {
+	border-color: rgba(39, 174, 96, 0.28);
+	background: rgba(240, 253, 244, 0.86);
+}
+
+.profile-view-card--allergies {
+	border-color: rgba(249, 115, 22, 0.3);
+	background: rgba(255, 247, 237, 0.9);
+}
+
+.profile-view-card--medications {
+	border-color: rgba(14, 165, 233, 0.3);
+	background: rgba(240, 249, 255, 0.9);
+}
+
+.profile-basic-grid {
+	margin-top: 10px;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+}
+
+.profile-basic-item {
+	padding: 12px;
+	border-radius: var(--radius-lg);
+	border: 1px solid rgba(17, 24, 39, 0.1);
+	background: rgba(255, 255, 255, 0.68);
+}
+
+.profile-basic-item span {
+	display: block;
+	font-size: 0.84rem;
+	font-weight: 750;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: rgba(107, 114, 128, 0.95);
+}
+
+.profile-basic-item strong {
+	display: block;
+	margin-top: 6px;
+	font-size: 1.06rem;
+	letter-spacing: -0.01em;
+}
+
+.profile-view-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.profile-chip-list {
+	list-style: none;
+	padding: 0;
+	margin: 10px 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.profile-chip {
+	padding: 8px 12px;
+	border-radius: 999px;
+	border: 1px solid rgba(47, 128, 237, 0.22);
+	background: rgba(47, 128, 237, 0.08);
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.profile-chip--medical {
+	border-color: rgba(39, 174, 96, 0.32);
+	background: rgba(39, 174, 96, 0.12);
+	color: rgba(20, 83, 45, 0.96);
+}
+
+.profile-chip--allergies {
+	border-color: rgba(249, 115, 22, 0.34);
+	background: rgba(249, 115, 22, 0.12);
+	color: rgba(124, 45, 18, 0.96);
+}
+
+.profile-chip--medications {
+	border-color: rgba(14, 165, 233, 0.34);
+	background: rgba(14, 165, 233, 0.12);
+	color: rgba(12, 74, 110, 0.96);
+}
+
+.profile-empty {
+	margin: 10px 0 0;
+	font-weight: 650;
+	color: rgba(107, 114, 128, 0.95);
+}
+
+@media (max-width: 980px) {
+	.profile-view-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.profile-basic-grid {
+		grid-template-columns: 1fr;
+	}
+}
+

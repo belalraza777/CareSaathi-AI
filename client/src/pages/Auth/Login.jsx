@@ -1,7 +1,9 @@
-import { useState,useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
+import "./Login.css";
 
 // Manages login form state and submits credentials through auth context.
 const Login = () => {
@@ -37,18 +39,33 @@ const Login = () => {
 		setLoading(false);
 	};
 
-	// Get Google auth URL
+	// Keep OAuth endpoint in sync with backend base URL.
 	const googleAuthUrl = useMemo(() => {
 		const base = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
 		return `${base.replace(/\/$/, "")}/auth/google`;
 	}, []);
 
 	return (
-		<div>
-			<h2>Login</h2>
+		<div className="auth-page">
+			<div className="auth-page__header">
+				<h2>Welcome back</h2>
+				<p>Continue with Google for fastest access, or use your email and password.</p>
+			</div>
+
+			<div className="auth-page__oauth-priority">
+				<span className="auth-page__priority-tag">Recommended</span>
+				<a href={googleAuthUrl} className="auth-page__btn auth-page__btn--google">
+					<FcGoogle />
+					Continue with Google
+				</a>
+			</div>
+
+			<div className="auth-page__divider">
+				<span>or continue with email</span>
+			</div>
 
 			<form onSubmit={onSubmit}>
-				<div>
+				<div className="auth-page__field">
 					<label htmlFor="email">Email</label>
 					<input
 						id="email"
@@ -60,7 +77,7 @@ const Login = () => {
 					/>
 				</div>
 
-				<div>
+				<div className="auth-page__field">
 					<label htmlFor="password">Password</label>
 					<input
 						id="password"
@@ -77,11 +94,8 @@ const Login = () => {
 				</button>
 			</form>
 
-			{message && <p>{message}</p>}
-			<a href={googleAuthUrl} className="auth-page__btn auth-page__btn--google">
-				Continue with Google
-			</a>
-			<p>
+			{message && <p className="auth-page__message">{message}</p>}
+			<p className="auth-page__switch">
 				Don&apos;t have an account?{" "}
 				<Link to="/signup">Sign up</Link>
 			</p>

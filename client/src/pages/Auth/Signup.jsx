@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
+import "./Signup.css";
 
 // Manages signup form state and sends registration data through auth context.
 const Signup = () => {
@@ -39,11 +40,16 @@ const Signup = () => {
 	};
 
 	return (
-		<div>
-			<h2>Sign Up</h2>
+		<div className="auth-page">
+			<div className="auth-page__header">
+				<h2>Create your account</h2>
+				<p>Create an account with email. Google sign-in is available on Login.</p>
+			</div>
+
+			{/* Google OAuth is intentionally handled from Login page only. */}
 
 			<form onSubmit={onSubmit}>
-				<div>
+				<div className="auth-page__field">
 					<label htmlFor="name">Name</label>
 					<input
 						id="name"
@@ -55,7 +61,7 @@ const Signup = () => {
 					/>
 				</div>
 
-				<div>
+				<div className="auth-page__field">
 					<label htmlFor="email">Email</label>
 					<input
 						id="email"
@@ -67,7 +73,7 @@ const Signup = () => {
 					/>
 				</div>
 
-				<div>
+				<div className="auth-page__field">
 					<label htmlFor="password">Password</label>
 					<input
 						id="password"
@@ -81,13 +87,13 @@ const Signup = () => {
 				</div>
 
 				<button type="submit" disabled={loading}>
-					{loading ? "Creating account..." : "Sign up"}
+					{loading ? "Creating account..." : "Create account"}
 				</button>
 			</form>
 
-			{message && <p>{message}</p>}
+			{message && <p className="auth-page__message">{message}</p>}
 
-			<p>
+			<p className="auth-page__switch">
 				Already have an account?{" "}
 				<Link to="/login">Login</Link>
 			</p>

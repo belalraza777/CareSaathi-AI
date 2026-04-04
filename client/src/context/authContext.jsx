@@ -1,3 +1,4 @@
+/* eslint react-refresh/only-export-components: off */
 // authContext.jsx - Global authentication state management
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { register, login, logout, checkAuth, resetPassword } from "../api/authApi";
@@ -10,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
     const [token, setToken] = useState(localStorage.getItem("token") || null); // Token is stored in httpOnly cookie, but we keep a flag in localStorage for client-side checks
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [, setError] = useState(null);
 
     // Save user data to state and localStorage
     const saveAuthData = useCallback((userData) => {

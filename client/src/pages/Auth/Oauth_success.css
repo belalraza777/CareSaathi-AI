@@ -1,0 +1,18 @@
+.oauth-success-page {
+	max-width: 520px;
+	margin: 0 auto;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
+	padding: 18px;
+	box-shadow: var(--shadow-soft);
+	backdrop-filter: blur(10px);
+	text-align: center;
+}
+
+.oauth-success-page__message {
+	margin: 0;
+	font-weight: 900;
+	letter-spacing: -0.01em;
+}
+

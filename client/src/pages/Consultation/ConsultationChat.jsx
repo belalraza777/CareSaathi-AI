@@ -1,5 +1,8 @@
-import { useMemo } from "react";
-import "./Consultation.css";
+import { useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
+import { FiSend, FiUser } from "react-icons/fi";
+import { FaStethoscope } from "react-icons/fa";
+import "./ConsultationChat.css";
 
 function ConsultationChat({
     consultationId,
@@ -11,13 +14,41 @@ function ConsultationChat({
     setChatMessage,
     onSendMessage,
 }) {
-    // Main consultation page controls state and actions; this component only renders UI.
+    const lastErrorRef = useRef("");
+    const chatLogRef = useRef(null);
+
+    useEffect(() => {
+        if (!error) return;
+        if (lastErrorRef.current === error) return;
+        lastErrorRef.current = error;
+        toast.error(error);
+    }, [error]);
+
+    useEffect(() => {
+        if (!chatLogRef.current) return;
+        // Keep the latest message in view.
+        chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+    }, [messages, loadingChat, loadingHistory]);
+
     // Memoize mapped message JSX to avoid rebuilding it when non-message state changes.
-    const renderedMessages = useMemo(() => messages.map((item, index) => (
-        <p key={`${item.role}-${index}`}>
-            <strong>{item.role === "user" ? "You" : "AI Doctor"}:</strong> {item.message}
-        </p>
-    )), [messages]);
+    const renderedMessages = useMemo(
+        () =>
+            messages.map((item, index) => {
+                const isUser = item.role === "user";
+                return (
+                    <div
+                        key={`${item.role}-${index}`}
+                        className={["chat-row", isUser ? "chat-row--user" : "chat-row--ai"].join(" ")}
+                    >
+                        <div className="chat-avatar" aria-hidden="true">
+                            {isUser ? <FiUser /> : <FaStethoscope />}
+                        </div>
+                        <div className="chat-bubble">{item.message}</div>
+                    </div>
+                );
+            }),
+        [messages]
+    );
 
     // Keep tiny input translation local so main page stays focused on data flow.
     const handleChatMessageChange = (e) => {
@@ -28,21 +59,46 @@ function ConsultationChat({
         <div>
             {error && <p className="consultation-error">{error}</p>}
 
-            <p>Consultation ID: {consultationId || "Create consultation from Talk section"}</p>
-
-            {consultationId ? (
-                loadingHistory ? (
-                    <p>Loading message history...</p>
-                ) : (
-                <div className="consultation-chat-box">
-                    {renderedMessages}
-                </div>
-                )
+            {!consultationId ? (
+                <p className="consultation-muted">Start talking to create a consultation, then continue in chat.</p>
             ) : (
-                <p>Start a consultation from Talk section, then open its chat URL to continue here.</p>
+                <div className="consultation-chat-box">
+                    <div
+                        className="chat-log"
+                        ref={chatLogRef}
+                        role="log"
+                        aria-live="polite"
+                    >
+                        {loadingHistory ? (
+                            <div className="chat-row chat-row--ai">
+                                <div className="chat-avatar" aria-hidden="true">
+                                    <FaStethoscope />
+                                </div>
+                                <div className="chat-bubble">Loading message history...</div>
+                            </div>
+                        ) : (
+                            renderedMessages
+                        )}
+
+                        {loadingChat && !loadingHistory && (
+                            <div className="chat-row chat-row--ai">
+                                <div className="chat-avatar" aria-hidden="true">
+                                    <FaStethoscope />
+                                </div>
+                                <div className="chat-bubble">
+                                    <div className="chat-typing" aria-label="Doctor is typing">
+                                        <span className="typing-dot" />
+                                        <span className="typing-dot" />
+                                        <span className="typing-dot" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
 
-            <form onSubmit={onSendMessage}>
+            <form onSubmit={onSendMessage} className="consultation-chat-actions">
                 <div className="consultation-row">
                     <input
                         className="consultation-input"
@@ -52,7 +108,12 @@ function ConsultationChat({
                         placeholder="Type your message"
                         disabled={!consultationId}
                     />
-                    <button className="consultation-button" type="submit" disabled={loadingChat || !consultationId}>
+                    <button
+                        className="consultation-button"
+                        type="submit"
+                        disabled={loadingChat || !consultationId}
+                    >
+                        <FiSend />
                         {loadingChat ? "Sending..." : "Send"}
                     </button>
                 </div>

@@ -44,31 +44,24 @@ function Consultation() {
         <div className="consultation-page">
             <h2>Consultation</h2>
             <section className="consultation-card">
-                <h3>Consultation Details</h3>
+                <h3>Details</h3>
                 {loadingConsultationData ? (
                     <p>Loading consultation details...</p>
                 ) : (
                     <div className="consultation-detail-grid">
-                        <p><strong>Consultation ID:</strong> {consultationData?.consultationId || activeConsultationId || "n/a"}</p>
-                        <p><strong>Main Symptoms:</strong> {consultationData?.mainSymptom?.length ? consultationData.mainSymptom.join(", ") : "n/a"}</p>
-                        <p><strong>Extracted Symptoms:</strong> {consultationData?.symptom?.length ? consultationData.symptom.join(", ") : "n/a"}</p>
+                        {/* Keep only high-value fields to make the top card easy to scan. */}
+                        <p><strong>ID:</strong> {consultationData?.consultationId || activeConsultationId || "n/a"}</p>
+                        <p><strong>Symptoms:</strong> {consultationData?.mainSymptom?.length ? consultationData.mainSymptom.join(", ") : "n/a"}</p>
                         <p><strong>Duration:</strong> {consultationData?.symptomDuration || "n/a"}</p>
-                        <p><strong>Gender:</strong> {consultationData?.gender || "n/a"}</p>
-                        <p><strong>Age:</strong> {consultationData?.age ?? "n/a"}</p>
-                        <p><strong>Height:</strong> {consultationData?.height ?? "n/a"}{consultationData?.height ? " cm" : ""}</p>
-                        <p><strong>Weight:</strong> {consultationData?.weight ?? "n/a"}{consultationData?.weight ? " kg" : ""}</p>
-                        <p><strong>Risk Level:</strong> {consultationData?.riskLevel || "n/a"}</p>
-                        <p><strong>Severity:</strong> {consultationData?.severity || "n/a"}</p>
-                        <p><strong>Notes:</strong> {consultationData?.notes || "n/a"}</p>
-                        <p><strong>Created At:</strong> {consultationData?.createdAt ? new Date(consultationData.createdAt).toLocaleString() : "n/a"}</p>
+                        <p><strong>Risk:</strong> {consultationData?.riskLevel || "n/a"}</p>
+                        <p><strong>Created:</strong> {consultationData?.createdAt ? new Date(consultationData.createdAt).toLocaleString() : "n/a"}</p>
                     </div>
                 )}
             </section>
 
             <div className="consultation-grid">
                 <section className="consultation-card">
-                    <h3>1. Talk</h3>
-                    <p>Voice flow is paused for now. Continue your consultation using chat.</p>
+                    <h3>Talk</h3>
                     <VoiceChat
                         setChatMessage={setChatMessage}
                         onSendMessage={handleSendMessage}
@@ -76,7 +69,7 @@ function Consultation() {
                 </section>
 
                 <section className="consultation-card">
-                    <h3>2. Chat</h3>
+                    <h3>Chat</h3>
                     <ConsultationChat
                         consultationId={activeConsultationId}
                         messages={messages}

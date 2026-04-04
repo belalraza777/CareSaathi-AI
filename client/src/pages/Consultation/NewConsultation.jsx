@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useConsultationFormStore } from "../../stores/consultationFormStore";
-import "./Consultation.css";
+import "./NewConsultation.css";
 
 function NewConsultation() {
     const navigate = useNavigate();
@@ -29,7 +29,7 @@ function NewConsultation() {
             // Redirect newly created consultations to the dedicated chat page.
             navigate(`/consultation/chat/${result.data?.consultationId || ""}`);
         }
-    }, [submitConsultation, navigate]);
+    }, [submitConsultation, clearFormState, navigate]);
 
     return (
         <div className="consultation-page">
@@ -52,14 +52,26 @@ function NewConsultation() {
                                 onChange={handleConsultationInputChange}
                                 placeholder="Type symptom and click Add"
                             />
-                            <button className="consultation-button" type="button" onClick={addMainSymptom}>Add</button>
+                            <button
+                                className="consultation-button consultation-button--ghost consultation-button--sm"
+                                type="button"
+                                onClick={addMainSymptom}
+                            >
+                                Add
+                            </button>
                         </div>
                         {consultationForm.mainSymptom.length > 0 && (
                             <ul className="consultation-list">
                                 {consultationForm.mainSymptom.map((symptom, index) => (
                                     <li className="consultation-list-item" key={`${symptom}-${index}`}>
                                         <span>{symptom}</span>
-                                        <button className="consultation-button" type="button" onClick={() => removeMainSymptom(index)}>✕</button>
+                                        <button
+                                            className="consultation-button consultation-button--danger-ghost consultation-button--sm"
+                                            type="button"
+                                            onClick={() => removeMainSymptom(index)}
+                                        >
+                                            ✕
+                                        </button>
                                     </li>
                                 ))}
                             </ul>

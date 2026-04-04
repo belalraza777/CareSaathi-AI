@@ -53,7 +53,23 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 export const speakText = async (text) => {
   const apiKey = import.meta.env.VITE_ELEVENLAB_API_KEY;
-  if (!apiKey) throw new Error("Missing ElevenLabs API key");
+  const safeText = text?.trim() || "Hello, mai aapka AI doctor hoon.";
+
+  // If ElevenLabs isn't configured, fall back to built-in browser TTS.
+  if (!apiKey) {
+    try {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(safeText);
+      utterance.lang = "hi-IN";
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn("Browser TTS fallback failed:", err);
+    }
+    return;
+  }
 
   const elevenlabs = new ElevenLabsClient({ apiKey });
 
@@ -61,7 +77,7 @@ export const speakText = async (text) => {
     const audioStream = await elevenlabs.textToSpeech.convert(
       "pNInz6obpgDQGcFmaJgB",
       {
-        text: text?.trim() || "Hello, mai aapka AI doctor hoon.",
+        text: safeText,
         modelId: "eleven_multilingual_v2",
         outputFormat: "mp3_44100_128",
       }
@@ -82,8 +98,14 @@ export const speakText = async (text) => {
     console.warn("ElevenLabs failed → using fallback", err);
 
     // ✅ ALWAYS WORKS
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "hi-IN";
-    speechSynthesis.speak(utterance);
+    try {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(safeText);
+      utterance.lang = "hi-IN";
+      window.speechSynthesis.speak(utterance);
+    } catch (fallbackErr) {
+      console.warn("Browser TTS fallback failed:", fallbackErr);
+    }
   }
 };

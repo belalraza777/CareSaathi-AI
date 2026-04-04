@@ -40,7 +40,7 @@ export const checkAuth = async () => {
     try {
         const response = await axiosInstance.get('/auth/check');
         return { success: true, data: response.data.data, authenticated: response.data.authenticated };
-    } catch (error) {
+    } catch {
         return { success: false, authenticated: false };
     }
 };

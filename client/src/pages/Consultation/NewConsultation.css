@@ -1,0 +1,11 @@
+@import "./Consultation.css";
+
+.new-consultation-form h2 {
+	margin-top: 0;
+}
+
+.new-consultation-submit {
+	width: 100%;
+	justify-content: center;
+}
+

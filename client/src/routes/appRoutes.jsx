@@ -8,6 +8,8 @@ import Profile from "../pages/Profile/Profile";
 import Consultation from "../pages/Consultation/Consultation";
 import NewConsultation from "../pages/Consultation/NewConsultation";
 import OAuthSuccess from "../pages/Auth/Oauth_success";
+import "./appRoutes.css";
+import RecentConsultation from "../pages/RecentConsultation/RecentConsultation";
 
 
 function AppRoutes() {
@@ -33,6 +35,11 @@ function AppRoutes() {
 					path="/consultation/chat/:consultationId"
 					element={isAuthenticated ? <Consultation /> : <Navigate to="/login" replace />}
 				/>
+				<Route
+					path="/consultation/recent"
+					element={isAuthenticated ? <RecentConsultation /> : <Navigate to="/login" replace />}
+				/>
+
 				<Route
 					path="/login"
 					element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
