@@ -133,8 +133,36 @@
 }
 
 @media (max-width: 640px) {
+	/* Keep conversation bubbles readable without overflowing the viewport. */
+	.consultation-chat-box {
+		min-height: 240px;
+	}
+
 	.chat-log {
 		height: 240px;
+		padding: 10px;
+	}
+
+	.chat-row {
+		gap: 8px;
+	}
+
+	.chat-avatar {
+		width: 30px;
+		height: 30px;
+		border-radius: 10px;
+	}
+
+	.chat-bubble {
+		max-width: calc(100% - 42px);
+		padding: 9px 10px;
+		border-radius: 14px;
+	}
+}
+
+@media (max-width: 420px) {
+	.chat-log {
+		height: 220px;
 	}
 }
 

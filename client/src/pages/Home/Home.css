@@ -442,3 +442,73 @@
 	}
 }
 
+@media (max-width: 640px) {
+	/* Collapse action rows into one-column stacks for thumb-friendly tap targets. */
+	.home-hero-inner {
+		padding: 16px;
+		gap: 14px;
+	}
+
+	.home-hero-title {
+		font-size: clamp(1.3rem, 7vw, 1.8rem);
+	}
+
+	.home-cta-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.home-btn {
+		width: 100%;
+	}
+
+	.home-badges {
+		flex-direction: column;
+	}
+
+	.home-badge {
+		width: 100%;
+		white-space: normal;
+	}
+
+	.home-preview-card {
+		max-width: none;
+	}
+
+	.home-section,
+	.home-feature-card {
+		padding: 14px;
+	}
+
+	.home-quick-actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.home-consultation-line {
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.home-consultation-label {
+		width: auto;
+	}
+}
+
+@media (max-width: 420px) {
+	.home-hero-inner {
+		padding: 14px;
+	}
+
+	.home-btn {
+		font-size: 0.95rem;
+		padding: 10px 12px;
+	}
+
+	.home-preview-avatar {
+		width: 54px;
+		height: 54px;
+		border-radius: 18px;
+	}
+}
+

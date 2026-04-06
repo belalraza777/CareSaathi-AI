@@ -154,3 +154,43 @@
 		flex-direction: column;
 	}
 }
+
+@media (max-width: 640px) {
+	/* Prevent cramped form and chat action rows on narrow screens. */
+	.consultation-page > h2 {
+		font-size: 1.35rem;
+	}
+
+	.consultation-card {
+		padding: 12px;
+	}
+
+	.consultation-detail-grid p {
+		padding: 8px;
+	}
+
+	.consultation-list-item {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.consultation-row {
+		gap: 8px;
+	}
+
+	.consultation-input,
+	.consultation-textarea {
+		font-size: 16px;
+	}
+
+	.consultation-row .consultation-button,
+	.consultation-list-item .consultation-button {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.consultation-button--sm {
+		padding: 10px 12px;
+		font-size: 0.95rem;
+	}
+}

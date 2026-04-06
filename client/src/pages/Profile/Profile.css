@@ -239,10 +239,35 @@
 	.profile-hero {
 		flex-direction: column;
 		align-items: flex-start;
+		padding: 14px;
+	}
+
+	/* Ensure profile hero actions remain readable and easy to tap on phones. */
+	.profile-hero__actions {
+		width: 100%;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.profile-hero__button {
+		width: 100%;
+		justify-content: center;
 	}
 
 	.profile-account-grid {
 		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 560px) {
+	.profile-account-card,
+	.profile-details-heading,
+	.profile-stat-card {
+		padding: 12px;
+	}
+
+	.profile-account-item {
+		padding: 10px;
 	}
 }
 

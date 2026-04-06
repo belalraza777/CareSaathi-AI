@@ -174,6 +174,44 @@
 	}
 }
 
+@media (max-width: 640px) {
+	/* Stack action controls vertically to keep profile editing comfortable on phones. */
+	.profile-form {
+		padding: 14px;
+	}
+
+	.profile-form__card {
+		padding: 12px;
+	}
+
+	.profile-form__field-head {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	.profile-form__chip-item {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.profile-form__chip-remove {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.profile-form .profile-form__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.profile-form__button-primary,
+	.profile-form__button-cancel {
+		width: 100%;
+		min-width: 0;
+	}
+}
+
 @media (max-width: 560px) {
 	.profile-form__array-input-row {
 		flex-direction: column;
