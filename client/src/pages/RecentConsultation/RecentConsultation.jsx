@@ -1,56 +1,88 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { FaClock, FaStethoscope } from "react-icons/fa";
+import { FiTrash2 } from "react-icons/fi";
 import { useHomeStore } from "../../stores/homeStore";
 import "./RecentConsultation.css";
 
 function RecentConsultation() {
   const consultations = useHomeStore((state) => state.consultations);
   const loadingConsultations = useHomeStore((state) => state.loadingConsultations);
+  const deletingConsultationId = useHomeStore((state) => state.deletingConsultationId);
   const error = useHomeStore((state) => state.error);
   const loadConsultations = useHomeStore((state) => state.loadConsultations);
+  const deleteConsultation = useHomeStore((state) => state.deleteConsultation);
 
   useEffect(() => {
     loadConsultations();
   }, [loadConsultations]);
 
-  // Memoize list rows to avoid rebuilding cards on unrelated state updates.
-  const consultationListItems = useMemo(() => consultations.map((consultation) => (
-    <li key={consultation.consultationId} className="recent-consultation-card">
-      <div className="recent-consultation-meta">
-        <div className="recent-consultation-line">
-          <span className="recent-consultation-label">Symptoms</span>
-          <span className="recent-consultation-value">
-            {consultation.mainSymptom?.join(", ") || "N/A"}
-          </span>
-        </div>
-        <div className="recent-consultation-line">
-          <span className="recent-consultation-label">Duration</span>
-          <span className="recent-consultation-value">
-            {consultation.symptomDuration || "N/A"}
-          </span>
-        </div>
-        <div className="recent-consultation-line">
-          <span className="recent-consultation-label">Risk</span>
-          <span className="recent-consultation-value">
-            {consultation.riskLevel || "Unknown"}
-          </span>
-        </div>
-        <div className="recent-consultation-line">
-          <span className="recent-consultation-label">Date</span>
-          <span className="recent-consultation-value">
-            {new Date(consultation.createdAt).toLocaleDateString()}
-          </span>
-        </div>
-      </div>
+  // Confirm destructive action to avoid accidental history removal.
+  const handleDeleteConsultation = useCallback(async (consultationId) => {
+    const shouldDelete = window.confirm("Delete this consultation and all its messages?");
+    if (!shouldDelete) {
+      return;
+    }
 
-      <div className="recent-consultation-actions">
-        <Link className="recent-btn recent-btn--link" to={`/consultation/chat/${consultation.consultationId}`}>
-          View Chat
-        </Link>
-      </div>
-    </li>
-  )), [consultations]);
+    const result = await deleteConsultation(consultationId);
+    if (result.success) {
+      toast.success(result.message || "Consultation deleted successfully");
+      return;
+    }
+
+    toast.error(result.message || "Failed to delete consultation");
+  }, [deleteConsultation]);
+
+  // Memoize list rows to avoid rebuilding cards on unrelated state updates.
+  const consultationListItems = useMemo(() => consultations.map((consultation) => {
+    const isDeleting = deletingConsultationId === consultation.consultationId;
+    return (
+      <li key={consultation.consultationId} className="recent-consultation-card">
+        <div className="recent-consultation-meta">
+          <div className="recent-consultation-line">
+            <span className="recent-consultation-label">Symptoms</span>
+            <span className="recent-consultation-value">
+              {consultation.mainSymptom?.join(", ") || "N/A"}
+            </span>
+          </div>
+          <div className="recent-consultation-line">
+            <span className="recent-consultation-label">Duration</span>
+            <span className="recent-consultation-value">
+              {consultation.symptomDuration || "N/A"}
+            </span>
+          </div>
+          <div className="recent-consultation-line">
+            <span className="recent-consultation-label">Risk</span>
+            <span className="recent-consultation-value">
+              {consultation.riskLevel || "Unknown"}
+            </span>
+          </div>
+          <div className="recent-consultation-line">
+            <span className="recent-consultation-label">Date</span>
+            <span className="recent-consultation-value">
+              {new Date(consultation.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+
+        <div className="recent-consultation-actions">
+          <Link className="recent-btn recent-btn--link" to={`/consultation/chat/${consultation.consultationId}`}>
+            View Chat
+          </Link>
+          <button
+            type="button"
+            className="recent-btn recent-btn--danger"
+            onClick={() => handleDeleteConsultation(consultation.consultationId)}
+            disabled={isDeleting}
+          >
+            <FiTrash2 />
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </li>
+    );
+  }), [consultations, deletingConsultationId, handleDeleteConsultation]);
 
   return (
     <main className="recent-page">

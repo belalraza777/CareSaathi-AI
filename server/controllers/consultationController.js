@@ -148,6 +148,7 @@ const getConsultationDetail = async (req, res) => {
         consultationId: new mongoose.Types.ObjectId(consultationId),
         userId: new mongoose.Types.ObjectId(req.user.id),
     }).lean();
+    
     if (!consultation) {
         return res.status(404).json({ success: false, message: "Consultation not found" });
     }
@@ -158,4 +159,28 @@ const getConsultationDetail = async (req, res) => {
     });
 };
 
-export default { createConsultation, chatConsultation, getUserConsultations, getConsultationMessages, getConsultationDetail };
+//Delete a consultation and its messages (optional, not currently exposed in routes)
+const deleteConsultation = async (req, res) => {
+    const { consultationId } = req.params;
+    // Validate consultationId format before querying
+    if (!consultationId || !mongoose.Types.ObjectId.isValid(consultationId)) {
+        return res.status(400).json({ success: false, message: "Invalid consultation ID format" });
+    }
+    // Verify consultation belongs to authenticated user before deletion
+    const consultation = await Consultation.findOneAndDelete({
+        consultationId: new mongoose.Types.ObjectId(consultationId),
+        userId: new mongoose.Types.ObjectId(req.user.id),
+    });
+    if (!consultation) {
+        return res.status(404).json({ success: false, message: "Consultation not found" });
+    }
+    // Also delete all messages associated with this consultation
+    await Message.deleteMany({ consultationId: new mongoose.Types.ObjectId(consultationId) });
+    return res.status(200).json({
+        success: true,
+        message: "Consultation and associated messages deleted successfully",
+    });
+}
+
+
+export default { createConsultation, chatConsultation, getUserConsultations, getConsultationMessages, getConsultationDetail ,deleteConsultation};

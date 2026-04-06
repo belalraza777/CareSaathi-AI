@@ -75,3 +75,16 @@ export const getConsultationMessages = async (consultationId) => {
         };
     }
 };
+
+// Delete one consultation and its related message history for the current user.
+export const deleteConsultation = async (consultationId) => {
+    try {
+        const response = await axiosInstance.delete(`/consultation/${consultationId}`);
+        return { success: true, data: response.data.data, message: response.data.message };
+    } catch (error) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Failed to delete consultation',
+        };
+    }
+};
