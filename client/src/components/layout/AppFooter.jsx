@@ -40,7 +40,7 @@ function AppFooter() {
                 <div className="app-footer__bottom">
                     <p>© {currentYear} CareSaathi AI – All conversations are private & secure</p>
                     {/* Author credit kept intentionally subtle in footer bottom row. */}
-                    <p className="app-footer__credit">made by belal raza</p>
+                    <p className="app-footer__credit">Made by BELAL</p>
                 </div>
             </div>
         </footer>
