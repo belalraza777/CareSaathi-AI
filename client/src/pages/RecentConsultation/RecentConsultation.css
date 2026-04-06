@@ -51,16 +51,16 @@
 }
 
 .recent-btn--primary {
-	background: var(--primary);
-	border-color: rgba(47, 128, 237, 0.3);
+	background: var(--secondary);
+	border-color: rgba(22, 101, 52, 0.3);
 	color: #ffffff;
-	box-shadow: 0 10px 20px rgba(47, 128, 237, 0.18);
+	box-shadow: 0 10px 20px rgba(39, 174, 96, 0.2);
 }
 
 .recent-btn--link {
-	background: rgba(47, 128, 237, 0.08);
-	border-color: rgba(47, 128, 237, 0.25);
-	color: var(--primary);
+	background: rgba(39, 174, 96, 0.1);
+	border-color: rgba(39, 174, 96, 0.3);
+	color: var(--secondary);
 }
 
 .recent-btn:hover {

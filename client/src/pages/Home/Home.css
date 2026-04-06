@@ -89,28 +89,28 @@
 	border: 1px solid rgba(255, 255, 255, 0.18);
 	cursor: pointer;
 	transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease;
-	box-shadow: 0 10px 20px rgba(47, 128, 237, 0.18);
+	box-shadow: 0 10px 20px rgba(39, 174, 96, 0.2);
 	font-weight: 900;
 	white-space: nowrap;
 }
 
 .home-btn--primary {
-	background: var(--primary);
-	border: 1px solid rgba(47, 128, 237, 0.3);
+	background: var(--secondary);
+	border: 1px solid rgba(22, 101, 52, 0.3);
 	color: #ffffff;
 }
 
 .home-btn--secondary {
-	background: rgba(47, 128, 237, 0.08);
-	border: 1px solid rgba(47, 128, 237, 0.25);
-	color: var(--primary);
+	background: rgba(39, 174, 96, 0.1);
+	border: 1px solid rgba(39, 174, 96, 0.3);
+	color: var(--secondary);
 	box-shadow: none;
 }
 
 .home-btn--link {
-	background: rgba(47, 128, 237, 0.08);
-	border: 1px solid rgba(47, 128, 237, 0.25);
-	color: var(--primary);
+	background: rgba(39, 174, 96, 0.1);
+	border: 1px solid rgba(39, 174, 96, 0.3);
+	color: var(--secondary);
 	box-shadow: none;
 	padding: 8px 12px;
 	border-radius: var(--radius-sm);
@@ -118,7 +118,7 @@
 
 .home-btn:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 14px 24px rgba(47, 128, 237, 0.22);
+	box-shadow: 0 14px 24px rgba(39, 174, 96, 0.26);
 }
 
 .home-badges {

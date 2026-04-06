@@ -108,17 +108,17 @@
 }
 
 .consultation-button {
-	/* Default to primary for the “main action” buttons */
-	background: var(--primary);
-	border: 1px solid rgba(47, 128, 237, 0.3);
+	/* Keep consultation CTA buttons aligned with the global secondary theme. */
+	background: var(--secondary);
+	border: 1px solid rgba(22, 101, 52, 0.28);
 	color: #ffffff;
-	box-shadow: 0 12px 22px rgba(47, 128, 237, 0.2);
+	box-shadow: 0 12px 22px rgba(39, 174, 96, 0.26);
 }
 
 .consultation-button--ghost {
-	background: rgba(47, 128, 237, 0.08);
-	border: 1px solid rgba(47, 128, 237, 0.25);
-	color: var(--primary);
+	background: rgba(39, 174, 96, 0.1);
+	border: 1px solid rgba(39, 174, 96, 0.3);
+	color: var(--secondary);
 	box-shadow: none;
 }
 

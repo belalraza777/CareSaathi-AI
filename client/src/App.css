@@ -42,32 +42,48 @@ textarea::placeholder {
 }
 
 /* Shared button base */
+/* Use the secondary tone for default call-to-action buttons. */
 button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	background: var(--primary);
+	background: var(--secondary);
+	background: linear-gradient(135deg, #34c97a 0%, var(--secondary) 100%);
 	color: #ffffff;
-	border: 1px solid rgba(255, 255, 255, 0.18);
-	border-radius: var(--radius-sm);
-	padding: 10px 14px;
+	border: 1px solid rgba(20, 83, 45, 0.18);
+	border-radius: calc(var(--radius-sm) + 2px);
+	padding: 10px 15px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
 	cursor: pointer;
-	transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-	box-shadow: 0 10px 20px rgba(47, 128, 237, 0.18);
+	transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease, filter 150ms ease;
+	box-shadow: 0 12px 24px rgba(39, 174, 96, 0.28);
 	white-space: nowrap;
 }
 
 button:hover:not(:disabled) {
 	transform: translateY(-1px);
-	box-shadow: 0 14px 24px rgba(47, 128, 237, 0.24);
+	box-shadow: 0 16px 28px rgba(39, 174, 96, 0.34);
+	filter: saturate(1.03);
+}
+
+button:active:not(:disabled) {
+	transform: translateY(0);
+	box-shadow: 0 8px 16px rgba(39, 174, 96, 0.24);
+}
+
+button:focus-visible {
+	outline: 3px solid rgba(39, 174, 96, 0.32);
+	outline-offset: 2px;
 }
 
 button:disabled {
-	opacity: 0.65;
+	opacity: 0.6;
 	cursor: not-allowed;
 	transform: none;
 	box-shadow: none;
+	filter: grayscale(0.1);
 }
 
 /* Links inside cards */

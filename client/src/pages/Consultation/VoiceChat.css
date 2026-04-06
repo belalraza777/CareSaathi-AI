@@ -196,7 +196,7 @@
 }
 
 .voicechat-btn {
-	background: var(--primary);
+	background: var(--secondary);
 }
 
 .voicechat-btn--danger {

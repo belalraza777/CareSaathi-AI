@@ -46,14 +46,14 @@
 }
 
 .profile-hero__button {
-	background: rgba(47, 128, 237, 0.08);
-	border: 1px solid rgba(47, 128, 237, 0.25);
-	color: var(--primary);
+	background: rgba(39, 174, 96, 0.1);
+	border: 1px solid rgba(39, 174, 96, 0.3);
+	color: var(--secondary);
 	box-shadow: none;
 }
 
 .profile-hero__button:hover:not(:disabled) {
-	background: rgba(47, 128, 237, 0.14);
+	background: rgba(39, 174, 96, 0.16);
 	box-shadow: none;
 }
 
