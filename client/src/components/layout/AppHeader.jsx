@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/authContext";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { FiLogOut, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { FaHeartbeat } from "react-icons/fa";
 import "./AppHeader.css";
@@ -28,10 +28,11 @@ function AppHeader() {
             <div className="app-header-container">
                 <div className="app-header-left">
                     <div className="app-brand-row">
-                        <h1 className="app-brand">
+                        {/* Brand doubles as a quick Home link. */}
+                        <Link to="/" className="app-brand" onClick={closeMenu} aria-label="Go to Home">
                             <FaHeartbeat />
                             <span>CareSaathi AI</span>
-                        </h1>
+                        </Link>
                         <button
                             type="button"
                             className="app-header-toggle"
