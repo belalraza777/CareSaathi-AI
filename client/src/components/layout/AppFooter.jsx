@@ -1,35 +1,47 @@
 import { Link } from "react-router-dom";
-import { FaHeartbeat } from "react-icons/fa";
+import { FaHeartbeat, FaStethoscope, FaHistory, FaUser, FaHome } from "react-icons/fa";
 import "./AppFooter.css";
 
 function AppFooter() {
-    // Keep year automatic so the footer remains current without manual updates.
     const currentYear = new Date().getFullYear();
 
     return (
         <footer className="app-footer">
-            <div className="app-footer__inner">
-                <section className="app-footer__brand-block" aria-label="Brand information">
-                    <h2 className="app-footer__brand">
-                        <FaHeartbeat />
-                        CareSaathi AI
-                    </h2>
-                    <p className="app-footer__tagline">
-                        Digital care experience for faster and more comfortable consultations.
-                    </p>
-                </section>
+            <div className="app-footer__container">
+                <div className="app-footer__main">
+                    {/* Brand Section */}
+                    <div className="app-footer__brand">
+                        <h2 className="app-footer__logo">
+                            <FaHeartbeat className="logo-icon" />
+                            CareSaathi AI
+                        </h2>
+                        <p className="app-footer__description">
+                            Digital care experience for faster and more comfortable consultations.
+                        </p>
+                    </div>
 
-                <nav className="app-footer__nav" aria-label="Footer Navigation">
-                    <Link to="/" className="app-footer__link">Home</Link>
-                    <Link to="/consultation/new" className="app-footer__link">New Consultation</Link>
-                    <Link to="/consultation/recent" className="app-footer__link">Recent Consultations</Link>
-                    <Link to="/profile" className="app-footer__link">Profile</Link>
-                </nav>
-            </div>
+                    {/* Navigation Links with Icons */}
+                    <nav className="app-footer__nav" aria-label="Footer Navigation">
+                        <Link to="/" className="app-footer__link">
+                            <FaHome /> Home
+                        </Link>
+                        <Link to="/consultation/new" className="app-footer__link">
+                            <FaStethoscope /> New Consultation
+                        </Link>
+                        <Link to="/consultation/recent" className="app-footer__link">
+                            <FaHistory /> Recent Consultations
+                        </Link>
+                        <Link to="/profile" className="app-footer__link">
+                            <FaUser /> Profile
+                        </Link>
+                    </nav>
+                </div>
 
-            <div className="app-footer__bottom">
-                <p>© {currentYear} CareSaathi AI</p>
-                <p>Designed for clear, structured and compassionate guidance.</p>
+                <div className="app-footer__bottom">
+                    <p>© {currentYear} CareSaathi AI – All conversations are private & secure</p>
+                    {/* Author credit kept intentionally subtle in footer bottom row. */}
+                    <p className="app-footer__credit">made by belal raza</p>
+                </div>
             </div>
         </footer>
     );
