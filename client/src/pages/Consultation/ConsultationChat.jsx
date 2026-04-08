@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { FiSend, FiUser } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
+import ChatMarkdown from "../../components/markdown/ChatMarkdown";
 import "./ConsultationChat.css";
 
 function ConsultationChat({
@@ -35,6 +36,12 @@ function ConsultationChat({
         () =>
             messages.map((item, index) => {
                 const isUser = item.role === "user";
+                const bubbleContent = isUser ? (
+                    item.message
+                ) : (
+                    <ChatMarkdown content={item.message} />
+                );
+
                 return (
                     <div
                         key={`${item.role}-${index}`}
@@ -43,7 +50,7 @@ function ConsultationChat({
                         <div className="chat-avatar" aria-hidden="true">
                             {isUser ? <FiUser /> : <FaStethoscope />}
                         </div>
-                        <div className="chat-bubble">{item.message}</div>
+                        <div className="chat-bubble">{bubbleContent}</div>
                     </div>
                 );
             }),

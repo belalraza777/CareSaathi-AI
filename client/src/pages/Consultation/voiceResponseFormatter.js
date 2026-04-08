@@ -1,5 +1,3 @@
-const MAX_TTS_SENTENCES = 6;
-const MAX_TTS_CHARS = 650;
 
 export const formatAiResponseForTts = (responseText) => {
   const raw = String(responseText || "").trim();
@@ -30,17 +28,7 @@ export const formatAiResponseForTts = (responseText) => {
   clean = sentences
     .map((part) => part.trim())
     .filter(Boolean)
-    .slice(0, MAX_TTS_SENTENCES)
     .join(" ");
-
-  if (clean.length > MAX_TTS_CHARS) {
-    clean = clean.slice(0, MAX_TTS_CHARS).replace(/[\s,;:.-]+$/, "");
-    clean += ".";
-  }
-
-  if (sentences.length > MAX_TTS_SENTENCES) {
-    clean += " Let me know if you want more details.";
-  }
 
   return clean;
 };

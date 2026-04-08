@@ -66,8 +66,8 @@
 	border: 1px solid var(--border);
 	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 	line-height: 1.45;
-	white-space: pre-wrap;
 	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 .chat-row--user .chat-avatar {
@@ -78,6 +78,7 @@
 	background: rgba(47, 128, 237, 0.10);
 	border-color: rgba(47, 128, 237, 0.28);
 	color: rgba(31, 41, 55, 0.98);
+	white-space: pre-wrap;
 }
 
 .chat-row--ai .chat-avatar {
@@ -87,6 +88,82 @@
 .chat-row--ai .chat-bubble {
 	background: rgba(86, 204, 242, 0.10);
 	border-color: rgba(86, 204, 242, 0.32);
+}
+
+.chat-markdown {
+	font-size: 0.95rem;
+}
+
+.chat-markdown > *:first-child {
+	margin-top: 0;
+}
+
+.chat-markdown > *:last-child {
+	margin-bottom: 0;
+}
+
+.chat-markdown :is(p, ul, ol, blockquote, pre, table, h1, h2, h3, h4) {
+	margin: 0 0 0.6rem;
+}
+
+.chat-markdown :is(ul, ol) {
+	padding-left: 1.1rem;
+}
+
+.chat-markdown li + li {
+	margin-top: 0.2rem;
+}
+
+.chat-markdown blockquote {
+	margin-left: 0;
+	padding: 0.4rem 0.65rem;
+	border-left: 3px solid rgba(47, 128, 237, 0.45);
+	background: rgba(255, 255, 255, 0.35);
+	border-radius: 8px;
+}
+
+.chat-markdown code {
+	font-family: "Fira Code", "Consolas", monospace;
+	font-size: 0.86em;
+	padding: 0.1rem 0.28rem;
+	border-radius: 6px;
+	background: rgba(31, 41, 55, 0.12);
+}
+
+.chat-markdown pre {
+	overflow-x: auto;
+	padding: 0.6rem;
+	border-radius: 10px;
+	background: rgba(15, 23, 42, 0.9);
+	color: rgba(248, 250, 252, 0.95);
+}
+
+.chat-markdown pre code {
+	padding: 0;
+	background: transparent;
+	color: inherit;
+}
+
+.chat-markdown table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+	padding: 0.35rem 0.45rem;
+	border: 1px solid rgba(31, 41, 55, 0.15);
+	text-align: left;
+	white-space: nowrap;
+}
+
+.chat-markdown a {
+	color: rgba(25, 96, 200, 0.95);
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 .chat-typing {
