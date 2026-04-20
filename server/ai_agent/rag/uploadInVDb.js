@@ -68,9 +68,9 @@ function isLowSignalChunk(text) {
 async function pdfIntoVDB() {
     try {
         // Step 1: Load the source PDF.
-        const PDF_PATH = path.join(
+        const PDF_PATH = path.resolve(
             path.dirname(fileURLToPath(import.meta.url)),
-            './standard-treatment-guidelines_.pdf'
+            process.env.PDF_PATH || './standard-treatment-guidelines_.pdf'
         );
         const pdfBaseName = path.basename(PDF_PATH, path.extname(PDF_PATH));
         const pdfFileName = path.basename(PDF_PATH);
@@ -130,7 +130,7 @@ async function pdfIntoVDB() {
 
         // Step 6: Initialize Pinecone client and target index.
         const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-        const indexName = process.env.PINECONE_INDEX_NAME || process.env.PINECONE_INDEX_NAME || `${pdfBaseName}-index`;
+        const indexName = process.env.PINECONE_INDEX || process.env.PINECONE_INDEX_NAME || `${pdfBaseName}-index`;
         const namespace = process.env.PINECONE_NAMESPACE || `${pdfBaseName}-pdf`;
 
         // Step 7: Check if the index exists, if not create it (idempotent).

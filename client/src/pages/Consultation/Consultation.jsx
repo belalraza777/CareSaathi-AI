@@ -40,6 +40,15 @@ function Consultation() {
         
     }, [activeConsultationId, trimmedChatMessage, sendMessage]);
 
+    const riskText = consultationData?.riskLevel || "n/a";
+    const riskClassName = consultationData?.riskLevel === "Mild"
+        ? "consultation-risk consultation-risk--mild"
+        : consultationData?.riskLevel === "Moderate"
+            ? "consultation-risk consultation-risk--moderate"
+            : consultationData?.riskLevel === "Critical"
+                ? "consultation-risk consultation-risk--critical"
+                : "consultation-risk";
+
     return (
         <div className="consultation-page">
             <h2>Consultation</h2>
@@ -49,11 +58,16 @@ function Consultation() {
                     <p>Loading consultation details...</p>
                 ) : (
                     <div className="consultation-detail-grid">
-                        {/* Keep only high-value fields to make the top card easy to scan. */}
                         <p><strong>ID:</strong> {consultationData?.consultationId || activeConsultationId || "n/a"}</p>
                         <p><strong>Symptoms:</strong> {consultationData?.mainSymptom?.length ? consultationData.mainSymptom.join(", ") : "n/a"}</p>
                         <p><strong>Duration:</strong> {consultationData?.symptomDuration || "n/a"}</p>
-                        <p><strong>Risk:</strong> {consultationData?.riskLevel || "n/a"}</p>
+                        <p><strong>Notes:</strong> {consultationData?.notes?.trim() ? consultationData.notes : "n/a"}</p>
+                        <p><strong>Gender:</strong> {consultationData?.gender || "n/a"}</p>
+                        <p><strong>Age:</strong> {consultationData?.age ?? "n/a"}</p>
+                        <p><strong>Height:</strong> {consultationData?.height != null ? `${consultationData.height} cm` : "n/a"}</p>
+                        <p><strong>Weight:</strong> {consultationData?.weight != null ? `${consultationData.weight} kg` : "n/a"}</p>
+                        <p><strong>Risk:</strong> <span className={riskClassName}>{riskText}</span></p>
+                        <p><strong>Severity:</strong> {consultationData?.severity || "n/a"}</p>
                         <p><strong>Created:</strong> {consultationData?.createdAt ? new Date(consultationData.createdAt).toLocaleString() : "n/a"}</p>
                     </div>
                 )}

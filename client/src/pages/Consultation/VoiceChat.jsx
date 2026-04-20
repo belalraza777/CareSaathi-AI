@@ -206,9 +206,9 @@ export default function VoiceChat({ setChatMessage, onSendMessage }) {
       </div>
 
       {/* Transcript block: live text + spoken reply preview. */}
-      <div className="voicechat-transcript">
+      {/* <div className="voicechat-transcript">
         <p>{text || "Press Start and speak to your AI doctor."}</p>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { ChatGroq } from "@langchain/groq";
-import { HumanMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createAgent } from "langchain";
 import { tools } from "../tools/tools.js";
-import { loadHistory, normalizeContent } from "./agentHelpers.js"; // Pull in output normalizer used after agent invoke.
+import { loadHistory, normalizeContent, buildIntakeContextMessage } from "./agentHelpers.js"; // Pull in output normalizer used after agent invoke.
 import SYSTEM_PROMPT from "./systemPrompt.js"; // systemPrompt.js exports default, not named.
 
 
@@ -28,6 +28,10 @@ export async function handleUserMessage({ userId, consultationId, message }) {
   try {
     // Load consultation to ensure it exists and belongs to user
     const history = await loadHistory(consultationId);
+    const intakeContext = await buildIntakeContextMessage({ userId, consultationId });
+    if (intakeContext) {
+      history.unshift(new SystemMessage(intakeContext));
+    }
     history.push(new HumanMessage(String(message ?? "")));
 
     // Invoke agent with conversation history and config for tools
