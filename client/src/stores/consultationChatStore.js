@@ -44,6 +44,23 @@ export const useConsultationChatStore = create((set, get) => ({
             loadingConsultationData: false,
         });
     },
+    // Refresh consultation data without toggling loading flags to keep chat UI smooth.
+    refreshConsultationData: async (consultationId) => {
+        if (!consultationId) {
+            return;
+        }
+
+        const result = await getConsultationDetail(consultationId);
+        if (!result.success) {
+            return;
+        }
+
+        set((state) => ({
+            consultationData: state.consultationData
+                ? { ...state.consultationData, ...(result.data || {}) }
+                : (result.data || null),
+        }));
+    },
     // Load message history for a given consultation ID; handles loading state and errors.
     loadMessageHistory: async (consultationId) => {
         if (!consultationId) {
@@ -82,9 +99,14 @@ export const useConsultationChatStore = create((set, get) => ({
         const result = await chatWithConsultation(consultationId, safeMessage);
         if (result.success) {
             const assistantMessage = result.response || "No response received";
+            const nextRiskLevel = result.data?.riskLevel;
+
             set((state) => ({
                 loadingChat: false,
                 messages: [...state.messages, { role: "assistant", message: assistantMessage }],
+                consultationData: nextRiskLevel
+                    ? { ...(state.consultationData || {}), riskLevel: nextRiskLevel }
+                    : state.consultationData,
             }));
             return { success: true, assistantMessage };
         }

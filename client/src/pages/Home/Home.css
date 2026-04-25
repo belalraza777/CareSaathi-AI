@@ -9,13 +9,9 @@
 /* ----- Hero Section ----- */
 .home-hero {
     position: relative;
-    background: radial-gradient(1200px 500px at 20% 0%, rgba(47, 128, 237, 0.18), transparent 55%),
-                radial-gradient(1000px 420px at 90% 20%, rgba(86, 204, 242, 0.14), transparent 55%),
-                radial-gradient(800px 380px at 50% 120%, rgba(39, 174, 96, 0.1), transparent 50%),
-                var(--card);
+    background: linear-gradient(140deg, rgba(245, 250, 255, 0.96), rgba(236, 246, 255, 0.9));
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
-    backdrop-filter: blur(8px);
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -27,7 +23,9 @@
 .home-hero-bg {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 0% 0%, rgba(47, 128, 237, 0.05), transparent 70%);
+    background:
+        radial-gradient(880px 320px at 12% 0%, rgba(47, 128, 237, 0.13), transparent 58%),
+        radial-gradient(720px 300px at 84% 16%, rgba(86, 204, 242, 0.11), transparent 56%);
     pointer-events: none;
 }
 
@@ -78,6 +76,8 @@
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
+    /* Keep LCP text independent from external heading webfont download. */
+    font-family: "Segoe UI", "Helvetica Neue", "Noto Sans", sans-serif;
 }
 
 .gradient-text {
@@ -305,6 +305,8 @@
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
+    content-visibility: auto;
+    contain-intrinsic-size: 720px;
 }
 
 .home-section-title {
@@ -369,6 +371,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.2rem;
+    content-visibility: auto;
+    contain-intrinsic-size: 520px;
 }
 
 .home-dashboard-card {

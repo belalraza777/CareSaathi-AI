@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "../../context/authContext";
 import useProfile from "./useProfile";
 import useProfileForm from "./useProfileForm";
@@ -31,6 +31,36 @@ function Profile() {
             percentage: Math.round((completed / total) * 100),
         };
     }, [profile]);
+
+    const closeFormModal = () => setIsEditing(false);
+
+    useEffect(() => {
+        if (!isEditing) {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isEditing]);
+
+    useEffect(() => {
+        if (!isEditing) {
+            return undefined;
+        }
+
+        const handleEscape = (event) => {
+            if (event.key === "Escape") {
+                setIsEditing(false);
+            }
+        };
+
+        window.addEventListener("keydown", handleEscape);
+        return () => window.removeEventListener("keydown", handleEscape);
+    }, [isEditing, setIsEditing]);
 
     // Handle submit
     const handleSubmit = async (e) => {
@@ -82,15 +112,13 @@ function Profile() {
 
                 <div className="profile-hero__actions">
                     {/* Keep one consistent primary action in the hero across read and edit states. */}
-                    {profile ? (
-                        <button
-                            type="button"
-                            className="profile-hero__button"
-                            onClick={() => setIsEditing(!isEditing)}
-                        >
-                            {isEditing ? "Back to profile" : "Edit profile"}
-                        </button>
-                    ) : null}
+                    <button
+                        type="button"
+                        className="profile-hero__button"
+                        onClick={() => setIsEditing(true)}
+                    >
+                        {profile ? "Edit profile" : "Create profile"}
+                    </button>
 
                     <span className="profile-hero__pill">
                         {profile ? `${completionStats.percentage}% complete` : "Profile not created"}
@@ -115,48 +143,88 @@ function Profile() {
 
             {profile && !isEditing ? (
                 <>
-                    <section className="profile-details-heading">
-                        {/* Keep health details visually separated from account identity details. */}
-                        <h3>Health Profile Details</h3>
-                        <p>Clinical information used for better consultation responses.</p>
-                    </section>
+                    <section className="profile-overview-card">
+                        <div className="profile-overview-card__head">
+                            {/* Keep health details visually separated from account identity details. */}
+                            <h3>Health Profile Overview</h3>
+                            <p>Clinical information used for better consultation responses.</p>
+                        </div>
 
-                    <section className="profile-stats-grid">
-                        <article className="profile-stat-card">
-                            <span className="profile-stat-card__label">Completion</span>
-                            <strong className="profile-stat-card__value">{completionStats.completed}/{completionStats.total}</strong>
-                        </article>
+                        <div className="profile-stats-grid">
+                            <article className="profile-stat-card">
+                                <span className="profile-stat-card__label">Completion</span>
+                                <strong className="profile-stat-card__value">{completionStats.completed}/{completionStats.total}</strong>
+                            </article>
 
-                        <article className="profile-stat-card">
-                            <span className="profile-stat-card__label">Medical History</span>
-                            <strong className="profile-stat-card__value">{profile.medicalHistory?.length || 0} items</strong>
-                        </article>
+                            <article className="profile-stat-card">
+                                <span className="profile-stat-card__label">Medical History</span>
+                                <strong className="profile-stat-card__value">{profile.medicalHistory?.length || 0} items</strong>
+                            </article>
 
-                        <article className="profile-stat-card">
-                            <span className="profile-stat-card__label">Active Medications</span>
-                            <strong className="profile-stat-card__value">{profile.medications?.length || 0} items</strong>
-                        </article>
+                            <article className="profile-stat-card">
+                                <span className="profile-stat-card__label">Active Medications</span>
+                                <strong className="profile-stat-card__value">{profile.medications?.length || 0} items</strong>
+                            </article>
+                        </div>
                     </section>
                 </>
             ) : null}
 
-            {error && !isEditing && <p className="profile-page__error">{error}</p>}
+            {!profile && !isEditing ? (
+                <section className="profile-empty-state">
+                    <h3>Start Your Health Profile</h3>
+                    <p>Add your age, history, allergies, and medications for better consultation responses.</p>
+                    <button
+                        type="button"
+                        className="profile-empty-state__button"
+                        onClick={() => setIsEditing(true)}
+                    >
+                        Create profile
+                    </button>
+                </section>
+            ) : null}
+
+            {error && !isEditing && profile && <p className="profile-page__error">{error}</p>}
 
             {!isEditing && profile && <ProfileView profile={profile} />}
 
-            {(isEditing || !profile) && (
-                <ProfileForm
-                    profile={profile}
-                    formData={formData}
-                    tempInput={tempInput}
-                    error={error}
-                    onInputChange={handleInputChange}
-                    onArrayInputChange={handleArrayInputChange}
-                    onAddArrayItem={addArrayItem}
-                    onRemoveArrayItem={removeArrayItem}
-                    onSubmit={handleSubmit}
-                    onCancel={() => setIsEditing(false)}
-                />
+            {isEditing && (
+                <div
+                    className="profile-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="profile-form-title"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            closeFormModal();
+                        }
+                    }}
+                >
+                    <div className="profile-modal__content">
+                        <button
+                            type="button"
+                            className="profile-modal__close"
+                            onClick={closeFormModal}
+                            aria-label="Close profile form"
+                        >
+                            Close
+                        </button>
+
+                        <ProfileForm
+                            headingId="profile-form-title"
+                            profile={profile}
+                            formData={formData}
+                            tempInput={tempInput}
+                            error={error}
+                            onInputChange={handleInputChange}
+                            onArrayInputChange={handleArrayInputChange}
+                            onAddArrayItem={addArrayItem}
+                            onRemoveArrayItem={removeArrayItem}
+                            onSubmit={handleSubmit}
+                            onCancel={closeFormModal}
+                        />
+                    </div>
+                </div>
             )}
         </main>
     );

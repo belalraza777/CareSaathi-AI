@@ -55,6 +55,7 @@ function ArrayField({ label, fieldName, inputValue, onInputChange, onAdd, onRemo
 
 // Form component for creating/editing profile
 function ProfileForm({
+    headingId,
     profile,
     formData,
     tempInput,
@@ -69,7 +70,7 @@ function ProfileForm({
     return (
         <form onSubmit={onSubmit} className="profile-form">
             <div className="profile-form__header">
-                <h2>{profile ? "Edit Profile" : "Create Profile"}</h2>
+                <h2 id={headingId}>{profile ? "Edit Profile" : "Create Profile"}</h2>
                 <p>These details help your consultations stay accurate and personalized.</p>
             </div>
 

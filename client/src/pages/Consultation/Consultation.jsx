@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
+import { FiAlertTriangle } from "react-icons/fi";
 import { useConsultationChatStore } from "../../stores/consultationChatStore";
 import ConsultationChat from "./ConsultationChat";
 import "./Consultation.css";
 import VoiceChat from "./VoiceChat";
 
 function Consultation() {
+    // Read consultation id from URL and keep a safe fallback string.
     const { consultationId: routeConsultationId } = useParams();
     const activeConsultationId = routeConsultationId || "";
 
+    // Pull chat state, consultation state, and actions from the shared store.
     const { chatMessage, messages, loadingChat, loadingHistory, error: chatError
-        , setChatMessage, loadConsultationData, consultationData, loadingConsultationData, loadMessageHistory, sendMessage, resetChatState
+        , setChatMessage, loadConsultationData, refreshConsultationData, consultationData, loadingConsultationData, loadMessageHistory, sendMessage, resetChatState
     } = useConsultationChatStore();
 
 
@@ -27,7 +30,8 @@ function Consultation() {
     // Trim chat message to prevent sending messages with only whitespace.
     const trimmedChatMessage = useMemo(() => chatMessage.trim(), [chatMessage]);
 
-    //Handle send message action; memoize to avoid unnecessary re-renders of ConsultationChat component.
+    // Send one message and then silently refresh consultation data for latest risk details.
+    // useCallback keeps this handler stable for child components.
     const handleSendMessage = useCallback(async (e, messageOverride = "") => {
         // Accept both form submit events and direct programmatic calls (voice flow).
         e?.preventDefault?.();
@@ -36,11 +40,17 @@ function Consultation() {
         if (!res.success) {
             return "";
         }
+
+        // Refresh risk after each message.
+        // This keeps the critical alert in sync.
+        refreshConsultationData(activeConsultationId);
         return res?.assistantMessage || "";
         
-    }, [activeConsultationId, trimmedChatMessage, sendMessage]);
+    }, [activeConsultationId, trimmedChatMessage, sendMessage, refreshConsultationData]);
 
+    // Derive display values from consultation risk for badge style and critical mode.
     const riskText = consultationData?.riskLevel || "n/a";
+    const isCriticalRisk = String(consultationData?.riskLevel || "").toLowerCase() === "critical";
     const riskClassName = consultationData?.riskLevel === "Mild"
         ? "consultation-risk consultation-risk--mild"
         : consultationData?.riskLevel === "Moderate"
@@ -49,8 +59,40 @@ function Consultation() {
                 ? "consultation-risk consultation-risk--critical"
                 : "consultation-risk";
 
+    // Freeze page scroll while emergency overlay is open.
+    useEffect(() => {
+        if (!isCriticalRisk) {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isCriticalRisk]);
+
     return (
         <div className="consultation-page">
+            {/* Critical mode overlay blocks interaction and shows immediate emergency guidance. */}
+            {isCriticalRisk && (
+                <div className="consultation-critical-overlay" role="alertdialog" aria-modal="true" aria-live="assertive">
+                    <section className="consultation-critical-card">
+                        <div className="consultation-critical-icon" aria-hidden="true">
+                            <FiAlertTriangle />
+                        </div>
+                        <p className="consultation-critical-badge">Critical Emergency</p>
+                        <h3>Immediate in-person care needed</h3>
+                        <div className="consultation-critical-message-list">
+                            <p>Call emergency services right now.</p>
+                            <p>Go to the nearest emergency hospital immediately.</p>
+                        </div>
+                    </section>
+                </div>
+            )}
+
+            {/* Consultation summary section shows latest clinical metadata for context. */}
             <h2>Consultation</h2>
             <section className="consultation-card">
                 <h3>Details</h3>
@@ -73,6 +115,7 @@ function Consultation() {
                 )}
             </section>
 
+            {/* Two-pane workspace: voice interaction on left, text chat on right. */}
             <div className="consultation-grid">
                 <section className="consultation-card">
                     <h3>Talk</h3>

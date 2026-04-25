@@ -39,6 +39,10 @@ function NewConsultation() {
 
             <section className="consultation-card">
                 <h2>Start New Consultation</h2>
+                <p className="consultation-muted new-consultation-note">
+                    Please fill this form carefully and provide correct details.
+                    Wrong information may affect your consultation quality and risk checks.
+                </p>
                 <form onSubmit={handleCreateConsultation}>
                     <div className="consultation-field">
                         <label htmlFor="mainSymptom">Main symptoms</label>
