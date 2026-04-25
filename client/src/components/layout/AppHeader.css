@@ -63,7 +63,16 @@
     -webkit-background-clip: text;
     color: transparent;
 }
+.app-nav-link svg {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
 
+.app-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 /* Mobile toggle button */
 .app-header-toggle {
     display: none;

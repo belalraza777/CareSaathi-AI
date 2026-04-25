@@ -22,7 +22,7 @@ export default function VoiceChat({ setChatMessage, onSendMessage }) {
   // Keep recorder and UI flags in component state for the full voice flow.
   const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
-  const [text, setText] = useState("");
+  const [_text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
