@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import "./Signup.css";
 
 // Manages signup form state and sends registration data through auth context.
@@ -15,7 +16,6 @@ const Signup = () => {
 		password: "",
 	});
 	const [loading, setLoading] = useState(false);
-	const [message, setMessage] = useState("");
 
 	const onChange = (e) => {
 		const { name, value } = e.target;
@@ -25,18 +25,21 @@ const Signup = () => {
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		setMessage("");
 
-		const result = await handleRegister(form);
+		try {
+			const result = await handleRegister(form);
 
-		if (result.success) {
-			setMessage(result.message || "Account created successfully");
-			navigate("/profile");
-		} else {
-			setMessage(result.message || "Signup failed");
+			if (result.success) {
+				toast.success(result.message || "Account created successfully");
+				navigate("/profile");
+			} else {
+				toast.error(result.message || "Signup failed");
+			}
+		} catch {
+			toast.error("Signup failed");
+		} finally {
+			setLoading(false);
 		}
-
-		setLoading(false);
 	};
 
 	return (
@@ -90,8 +93,6 @@ const Signup = () => {
 					{loading ? "Creating account..." : "Create account"}
 				</button>
 			</form>
-
-			{message && <p className="auth-page__message">{message}</p>}
 
 			<p className="auth-page__switch">
 				Already have an account?{" "}

@@ -3,7 +3,6 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import Profile from "../../models/profileModel.js";
 import Consultation from "../../models/consultationModel.js";
-import { llm } from "../agent/agent.js";
 import { retrieveMedicalKnowledgeTool } from "./ragTool.js";
 
 // -------------------------
@@ -22,6 +21,14 @@ const isValidObjectId = (value) =>
 
 const toObjectId = (value) =>
   new mongoose.Types.ObjectId(String(value));
+
+const getLlm = async () => {
+  const mod = await import("../agent/agent.js");
+  return mod.llm;
+};
+
+// fetch fallback (Node safe)
+const fetchFn = global.fetch || (await import("node-fetch")).default;
 
 // -------------------------
 // Schemas
@@ -101,11 +108,19 @@ export const getPatientProfileTool = tool(
 export const setRiskLevelTool = tool(
   async (args, config) => {
     const { consultationId, userId } = getRuntimeIds(config);
-    const risk = String(args?.risk_level || "").trim();
 
-    if (!["Mild", "Moderate", "Critical"].includes(risk)) {
-      return { success: false };
-    }
+    const riskRaw = String(args?.risk_level || "").trim().toLowerCase();
+
+    const normalizedRisk =
+      riskRaw === "mild"
+        ? "Mild"
+        : riskRaw === "moderate"
+        ? "Moderate"
+        : riskRaw === "critical"
+        ? "Critical"
+        : null;
+
+    if (!normalizedRisk) return { success: false };
 
     if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
       return { success: false };
@@ -116,11 +131,11 @@ export const setRiskLevelTool = tool(
         consultationId: toObjectId(consultationId),
         userId: toObjectId(userId),
       },
-      { riskLevel: risk },
+      { riskLevel: normalizedRisk },
       { returnDocument: "after" }
     );
 
-    return updated ? { success: true, risk } : { success: false };
+    return updated ? { success: true, risk: normalizedRisk } : { success: false };
   },
   {
     name: "set_risk_level",
@@ -141,11 +156,12 @@ export const recommendOTCTool = tool(
 
     if (!rawInput) return { error: "No symptom" };
 
+    let timeout;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      timeout = setTimeout(() => controller.abort(), 5000);
 
-      const res = await fetch(
+      const res = await fetchFn(
         `https://api.fda.gov/drug/label.json?search=indications_and_usage:${encodeURIComponent(
           rawInput
         )}&limit=5`,
@@ -161,9 +177,15 @@ export const recommendOTCTool = tool(
       const candidates =
         data.results
           ?.map((r) => ({
-            name: r.openfda?.generic_name?.[0],
-            dosage: r.dosage_and_administration?.[0],
-            warnings: r.warnings?.[0],
+            name: Array.isArray(r.openfda?.generic_name)
+              ? r.openfda.generic_name[0]
+              : undefined,
+            dosage: Array.isArray(r.dosage_and_administration)
+              ? r.dosage_and_administration[0]
+              : undefined,
+            warnings: Array.isArray(r.warnings)
+              ? r.warnings[0]
+              : undefined,
           }))
           .filter((r) => r.name) || [];
 
@@ -190,6 +212,7 @@ export const recommendOTCTool = tool(
         warnings: best.warnings?.slice(0, 200) || "",
       };
     } catch {
+      if (timeout) clearTimeout(timeout);
       return { error: "Fetch failed" };
     }
   },
@@ -214,17 +237,23 @@ export const calculateRiskTool = tool(
       : [];
 
     try {
-      const response = await llm.invoke(
+      const model = await getLlm();
+      const response = await model.invoke(
         `Return ONLY JSON:
 {"risk":"Mild"|"Moderate"|"Critical","reason":"short"}
 
 Symptoms: ${JSON.stringify(rawSymptoms)}`
       );
 
+      const content =
+        typeof response === "string"
+          ? response
+          : response?.content || "";
+
       let parsed;
       try {
         parsed = JSON.parse(
-          String(response.content).replace(/```json|```/g, "").trim()
+          String(content).replace(/```json|```/g, "").trim()
         );
       } catch {
         parsed = { risk: "Mild", reason: "" };

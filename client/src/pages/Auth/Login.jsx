@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner";
 import "./Login.css";
 
 // Manages login form state and submits credentials through auth context.
@@ -15,7 +16,6 @@ const Login = () => {
 		password: "",
 	});
 	const [loading, setLoading] = useState(false);
-	const [message, setMessage] = useState("");
 
 	const onChange = (e) => {
 		const { name, value } = e.target;
@@ -25,18 +25,21 @@ const Login = () => {
 	const onSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		setMessage("");
 
-		const result = await handleLogin(form);
+		try {
+			const result = await handleLogin(form);
 
-		if (result.success) {
-			setMessage(result.message || "Login successful");
-			navigate("/");
-		} else {
-			setMessage(result.message || "Login failed");
+			if (result.success) {
+				toast.success(result.message || "Login successful");
+				navigate("/");
+			} else {
+				toast.error(result.message || "Login failed");
+			}
+		} catch {
+			toast.error("Login failed");
+		} finally {
+			setLoading(false);
 		}
-
-		setLoading(false);
 	};
 
 	// Keep OAuth endpoint in sync with backend base URL.
@@ -94,7 +97,6 @@ const Login = () => {
 				</button>
 			</form>
 
-			{message && <p className="auth-page__message">{message}</p>}
 			<p className="auth-page__switch">
 				Don&apos;t have an account?{" "}
 				<Link to="/signup">Sign up</Link>
