@@ -14,6 +14,14 @@ const loginUser = async (req, res, next) => {
     if (!user) {
         return res.status(400).json({ success: false, message: "User not exist!", error: "Authentication Failed" });
     }
+    // OAuth users do not have a local password hash.
+    if (!user.passwordHash) {
+        return res.status(400).json({
+            success: false,
+            message: "This account uses social login. Please continue with Google.",
+            error: "Authentication Failed"
+        });
+    }
     // Comparing password with hashed password
     const matchPassword = await bcrypt.compare(password, user.passwordHash);
     // If password does not match, return error
@@ -97,16 +105,23 @@ const checkUser = async (req, res, next) => {
     if (!token && req.headers.authorization) {
         const authHeader = req.headers.authorization;
         if (authHeader.startsWith('Bearer ')) {
-            token = authHeader.substring(7);
+            token = authHeader.substring(7).trim();
         }
     }
 
     // If no token, return unauthorized status
-    if (!token) {
+    if (!token || token === "cookie-auth") {
         return res.status(401).json({ authenticated: false, message: "No token provided", success: false });
     }
-    //Verifying Token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    let decoded;
+    try {
+        // Verify token and convert malformed/expired cases into auth errors.
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+        return res.status(401).json({ authenticated: false, message: "Invalid token", success: false });
+    }
+
     if (!decoded) {
         return res.status(401).json({ authenticated: false, message: "Invalid token", success: false });
     }
