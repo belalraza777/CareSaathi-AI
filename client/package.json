@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "axios": "^1.15.2",
     "react": "^19.2.4",
@@ -16,7 +19,6 @@
     "react-icons": "^5.6.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
-    "react-speech-recognition": "^4.0.1",
     "remark-gfm": "^4.0.1",
     "sanscript": "^0.0.2",
     "sonner": "^2.0.7",
