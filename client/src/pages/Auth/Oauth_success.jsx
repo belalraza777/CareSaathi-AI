@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext.jsx';
+import { getProfile } from '../../api/profileApi.js';
 import './Oauth_success.css';
 
 
@@ -16,6 +17,11 @@ const OAuthSuccess = () => {
                 // Backend has set httpOnly cookie, fetch user data
                 const result = await refreshUser();
                 if (result.success) {
+                    const profileResult = await getProfile();
+                    if (!profileResult.success && profileResult.message === "Profile not found") {
+                        navigate('/profile', { replace: true, state: { fromSignup: true } });
+                        return;
+                    }
                     navigate('/', { replace: true });
                 } else {
                     navigate('/login', { replace: true });

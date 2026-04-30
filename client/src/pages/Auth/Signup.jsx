@@ -31,7 +31,7 @@ const Signup = () => {
 
 			if (result.success) {
 				toast.success(result.message || "Account created successfully");
-				navigate("/profile");
+				navigate("/profile", { state: { fromSignup: true } });
 			} else {
 				toast.error(result.message || "Signup failed");
 			}

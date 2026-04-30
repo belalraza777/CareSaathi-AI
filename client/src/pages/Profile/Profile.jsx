@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import useProfile from "./useProfile";
 import useProfileForm from "./useProfileForm";
@@ -8,8 +9,10 @@ import "./Profile.css";
 
 function Profile() {
     const { user } = useAuth();
+    const location = useLocation();
     const { profile, loading, error, isEditing, setIsEditing, create, update } = useProfile();
     const { formData, tempInput, handleInputChange, handleArrayInputChange, addArrayItem, removeArrayItem } = useProfileForm(profile);
+    const hasOpenedFormRef = useRef(false);
 
     const displayName = profile?.user?.name || user?.name || "Not available";
     const displayEmail = profile?.user?.email || user?.email || "Not available";
@@ -61,6 +64,18 @@ function Profile() {
         window.addEventListener("keydown", handleEscape);
         return () => window.removeEventListener("keydown", handleEscape);
     }, [isEditing, setIsEditing]);
+
+    // If user just came from signup and profile is not loaded yet, open the form modal automatically. Only do this on the first load to avoid disrupting users who navigate back to the profile page.
+    useEffect(() => {
+        if (hasOpenedFormRef.current || loading) {
+            return;
+        }
+
+        if (!profile && location.state?.fromSignup) {
+            setIsEditing(true);
+            hasOpenedFormRef.current = true;
+        }
+    }, [loading, profile, location.state, setIsEditing]);
 
     // Handle submit
     const handleSubmit = async (e) => {
