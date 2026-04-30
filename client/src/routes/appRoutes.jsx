@@ -8,14 +8,15 @@ import Profile from "../pages/Profile/Profile";
 import Consultation from "../pages/Consultation/Consultation";
 import NewConsultation from "../pages/Consultation/NewConsultation";
 import OAuthSuccess from "../pages/Auth/Oauth_success";
-import "./appRoutes.css";
+import "./AppRoutes.css";
 import RecentConsultation from "../pages/RecentConsultation/RecentConsultation";
-
+import ScrollToTop from "./ScrollToTop";
 
 function AppRoutes() {
 	const { isAuthenticated } = useAuth();
 
-	return (
+	return (<>
+		<ScrollToTop />
 		<Routes>
 			<Route element={<AppLayout />}>
 				<Route
@@ -54,6 +55,7 @@ function AppRoutes() {
 				<Route path="*" element={<Navigate to="/" replace />} />
 			</Route>
 		</Routes>
+	</>
 	);
 }
 
