@@ -1,5 +1,5 @@
 import "./App.css";
-import AppRoutes from "./routes/AppRoutes";
+import AppRoutes from "./routes/appRoutes";
 import { Toaster } from "sonner";
 
 function App() {

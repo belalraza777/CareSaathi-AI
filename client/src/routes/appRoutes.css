@@ -1,2 +1,13 @@
-/* Route-only component styling intentionally left blank. */
+.app-route-loading {
+	align-items: center;
+	color: #0f172a;
+	display: flex;
+	font-size: 1.15rem;
+	font-weight: 600;
+	justify-content: center;
+	letter-spacing: 0.02em;
+	min-height: 55vh;
+	padding: 2rem 1.5rem;
+	text-align: center;
+}
 
