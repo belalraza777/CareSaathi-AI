@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 import AppLayout from "../components/layout/AppLayout";
-import "./AppRoutes.css";
+import "./appRoutes.css";
 import ScrollToTop from "./ScrollToTop";
 
 const Login = lazy(() => import("../pages/Auth/Login"));
