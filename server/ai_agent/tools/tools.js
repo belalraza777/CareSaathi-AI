@@ -4,6 +4,7 @@ import { z } from "zod";
 import Profile from "../../models/profileModel.js";
 import Consultation from "../../models/consultationModel.js";
 import { retrieveMedicalKnowledgeTool } from "./ragTool.js";
+import { buildIntakeContextMessage } from "../agent/agentHelpers.js";
 
 // -------------------------
 // Helpers
@@ -49,55 +50,43 @@ const calculateRiskSchema = z.object({
   input: z.union([z.string(), z.array(z.string()), z.null()]).optional(),
 });
 
-// -------------------------
-// Tool 1: Patient Profile
-// -------------------------
-export const getPatientProfileTool = tool(
-  async (_, config) => {
-    const { userId, consultationId } = getRuntimeIds(config);
 
-    if (!isValidObjectId(userId)) {
+
+// -------------------------
+// Tool 1: Patient Context Tool [profile + consultation data] 
+// -------------------------
+export const getPatientContextTool = tool(
+  async (_, config) => {
+
+    try {
+      const { userId, consultationId } = getRuntimeIds(config);
+      const context = await buildIntakeContextMessage({
+        userId,
+        consultationId,
+      });
+
+      if (!context) {
+        return {
+          success: false,
+          message: "No patient context found",
+        };
+      }
       return {
-        age: null,
-        height: null,
-        weight: null,
-        gender: null,
-        allergies: [],
-        medicalHistory: [],
+        success: true,
+        patientContext: context,
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
       };
     }
-
-    const [profile, consultation] = await Promise.all([
-      Profile.findOne({ user: toObjectId(userId) })
-        .lean()
-        .select({
-          allergies: 1,
-          medicalHistory: 1,
-          age: 1,
-          height: 1,
-          weight: 1,
-          gender: 1,
-        }),
-      isValidObjectId(consultationId)
-        ? Consultation.findOne({
-            consultationId: toObjectId(consultationId),
-            userId: toObjectId(userId),
-          }).lean()
-        : null,
-    ]);
-
-    return {
-      age: consultation?.age ?? profile?.age ?? null,
-      height: consultation?.height ?? profile?.height ?? null,
-      weight: consultation?.weight ?? profile?.weight ?? null,
-      gender: consultation?.gender || profile?.gender || null,
-      allergies: profile?.allergies || [],
-      medicalHistory: profile?.medicalHistory || [],
-    };
   },
   {
-    name: "get_patient_profile",
-    description: "Get patient profile data",
+    name: "get_patient_context",
+    description:
+      "Get patient consultation context including symptoms, duration, notes, age, gender, height, weight, allergies, medical history and medications. Use this only when patient details are required.",
     schema: emptySchema,
   }
 );
@@ -115,10 +104,10 @@ export const setRiskLevelTool = tool(
       riskRaw === "mild"
         ? "Mild"
         : riskRaw === "moderate"
-        ? "Moderate"
-        : riskRaw === "critical"
-        ? "Critical"
-        : null;
+          ? "Moderate"
+          : riskRaw === "critical"
+            ? "Critical"
+            : null;
 
     if (!normalizedRisk) return { success: false };
 
@@ -231,10 +220,10 @@ export const calculateRiskTool = tool(
     const rawSymptoms = Array.isArray(args?.symptoms)
       ? args.symptoms
       : typeof args?.input === "string"
-      ? [args.input]
-      : Array.isArray(args?.input)
-      ? args.input
-      : [];
+        ? [args.input]
+        : Array.isArray(args?.input)
+          ? args.input
+          : [];
 
     try {
       const model = await getLlm();
@@ -274,39 +263,41 @@ Symptoms: ${JSON.stringify(rawSymptoms)}`
   }
 );
 
-// -------------------------
-// Tool 5: Consultation Data
-// -------------------------
-export const consultationDataTool = tool(
-  async (_, config) => {
-    const { consultationId, userId } = getRuntimeIds(config);
+// // -------------------------
+// // Tool 5: Consultation Data
+// // -------------------------
+// export const consultationDataTool = tool(
+//   async (_, config) => {
+//     const { consultationId, userId } = getRuntimeIds(config);
 
-    if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
-      return {};
-    }
+//     if (!isValidObjectId(consultationId) || !isValidObjectId(userId)) {
+//       return {};
+//     }
 
-    const consultation = await Consultation.findOne({
-      consultationId: toObjectId(consultationId),
-      userId: toObjectId(userId),
-    }).lean();
+//     const consultation = await Consultation.findOne({
+//       consultationId: toObjectId(consultationId),
+//       userId: toObjectId(userId),
+//     }).lean();
 
-    return consultation || {};
-  },
-  {
-    name: "get_consultation_data",
-    description: "Get consultation data",
-    schema: emptySchema,
-  }
-);
+//     return consultation || {};
+//   },
+//   {
+//     name: "get_consultation_data",
+//     description: "Get consultation data",
+//     schema: emptySchema,
+//   }
+// );
 
 // -------------------------
 // Export
 // -------------------------
 export const tools = [
-  getPatientProfileTool,
+  // getPatientProfileTool,
   setRiskLevelTool,
   recommendOTCTool,
   calculateRiskTool,
-  consultationDataTool,
+  // consultationDataTool,
   retrieveMedicalKnowledgeTool,
+  getPatientContextTool
+
 ];

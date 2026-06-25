@@ -3,63 +3,70 @@ import { ChatGroq } from "@langchain/groq";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createAgent } from "langchain";
 import { tools } from "../tools/tools.js";
-import { loadHistory, normalizeContent, buildIntakeContextMessage } from "./agentHelpers.js"; // Pull in output normalizer used after agent invoke.
-import SYSTEM_PROMPT from "./systemPrompt.js"; // systemPrompt.js exports default, not named.
+import { loadHistory, normalizeContent } from "./agentHelpers.js";
+import SYSTEM_PROMPT from "./systemPrompt.js";
 
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
+const IMAGE_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
-const model = new ChatGroq({
-  model: "openai/gpt-oss-120b", //other backup models: "llama-3.3-70b-versatile", "openai/gpt-oss-20b", 
-  temperature: 0.4,
-  apiKey: process.env.GROQ_API_KEY,
-});
+export async function handleUserMessage({ userId, consultationId, message, imageFile }) {
 
-export const llm = model; // Named export for tools that need direct model access.
+  // Select model based on image
+  const model = new ChatGroq({
+    model: imageFile ? IMAGE_MODEL : DEFAULT_MODEL,
+    temperature: 0.4,
+    apiKey: process.env.GROQ_API_KEY,
+  });
+  // Create an agent with the selected model, tools, and system prompt. The agent will handle the conversation flow and generate responses based on the user's input and the context of the consultation.
+  const agent = createAgent({
+    model,
+    tools,
+    systemPrompt: SYSTEM_PROMPT,
+  });
 
+  // Load the conversation history for the given consultation ID. This history will be used to provide context to the agent, allowing it to generate more relevant and coherent responses based on previous messages in the conversation.
+  const history = await loadHistory(consultationId);
 
-// Shared agent — tools resolve userId from config at runtime.
-const agent = createAgent({
-  model,
-  tools,
-  systemPrompt: SYSTEM_PROMPT,
-});
+  // If an image file is provided, convert it to a base64-encoded string and add it to the conversation history as part of the user's message. This allows the agent to process the image along with the text message, enabling it to generate responses that take both text and visual information into account.
+  if (imageFile) {
+    const base64 = imageFile.buffer.toString("base64");
 
-
-export async function handleUserMessage({ userId, consultationId, message }) {
-  try {
-    // Load consultation to ensure it exists and belongs to user
-    const history = await loadHistory(consultationId);
-    const intakeContext = await buildIntakeContextMessage({ userId, consultationId });
-    if (intakeContext) {
-      history.unshift(new SystemMessage(intakeContext));
-    }
-    history.push(new HumanMessage(String(message ?? "")));
-
-    // Invoke agent with conversation history and config for tools
-    const result = await agent.invoke(
-      { messages: history },
-      { configurable: { userId, consultationId } }
+    history.push(
+      new HumanMessage({
+        content: [
+          {
+            type: "text",
+            text: String(message),
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${imageFile.mimetype};base64,${base64}`,
+            },
+          },
+        ],
+      })
     );
-
-    // Get latest AI message safely
-    const latestAiMessage = result?.messages
-      ?.slice()
-      ?.reverse()
-      ?.find((m) => m?.type === "ai" || m?._getType?.() === "ai");
-
-    // Extract proper text
-    const finalResponse = normalizeContent(
-      latestAiMessage?.content ?? result?.content
+  } else {
+    history.push(
+      new HumanMessage(String(message))
     );
-    
-    return finalResponse || "Sorry, I couldn't process that. Please try again.";
-
-  } catch (err) {
-    console.error("Error:", err?.message || err);
-    throw err;
   }
-}
 
-export default {
-  handleUserMessage,
-  model,
-};
+  const result = await agent.invoke(
+    { messages: history },
+    {
+      configurable: {
+        userId,
+        consultationId,
+      },
+    }
+  );
+
+  const aiMessage = result.messages
+    .slice()
+    .reverse()
+    .find((m) => m.type === "ai");
+
+  return normalizeContent(aiMessage?.content);
+}
