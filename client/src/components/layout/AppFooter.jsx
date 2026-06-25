@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { FaHeartbeat, FaStethoscope, FaHistory, FaUser, FaHome } from "react-icons/fa";
+import { FaHeartbeat } from "react-icons/fa";
 import "./AppFooter.css";
 
 function AppFooter() {
@@ -19,27 +18,11 @@ function AppFooter() {
                             Digital care experience for faster and more comfortable consultations.
                         </p>
                     </div>
-
-                    {/* Navigation Links with Icons */}
-                    <nav className="app-footer__nav" aria-label="Footer Navigation">
-                        <Link to="/" className="app-footer__link">
-                            <FaHome /> Home
-                        </Link>
-                        <Link to="/consultation/new" className="app-footer__link">
-                            <FaStethoscope /> New Consultation
-                        </Link>
-                        <Link to="/consultation/recent" className="app-footer__link">
-                            <FaHistory /> Recent Consultations
-                        </Link>
-                        <Link to="/profile" className="app-footer__link">
-                            <FaUser /> Profile
-                        </Link>
-                    </nav>
+                    {/* Navigation removed – no links */}
                 </div>
 
                 <div className="app-footer__bottom">
                     <p>© {currentYear} CareSaathi AI – All conversations are private & secure</p>
-                    {/* Author credit kept intentionally subtle in footer bottom row. */}
                     <p className="app-footer__credit">Made by BELAL</p>
                 </div>
             </div>
