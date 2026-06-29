@@ -94,11 +94,11 @@
 	font-size: 0.95rem;
 }
 
-.chat-markdown > *:first-child {
+.chat-markdown>*:first-child {
 	margin-top: 0;
 }
 
-.chat-markdown > *:last-child {
+.chat-markdown>*:last-child {
 	margin-bottom: 0;
 }
 
@@ -110,7 +110,7 @@
 	padding-left: 1.1rem;
 }
 
-.chat-markdown li + li {
+.chat-markdown li+li {
 	margin-top: 0.2rem;
 }
 
@@ -183,16 +183,19 @@
 .typing-dot:nth-child(2) {
 	animation-delay: 150ms;
 }
+
 .typing-dot:nth-child(3) {
 	animation-delay: 300ms;
 }
 
 @keyframes typingBounce {
+
 	0%,
 	100% {
 		transform: translateY(0);
 		opacity: 0.65;
 	}
+
 	50% {
 		transform: translateY(-5px);
 		opacity: 1;
@@ -210,13 +213,13 @@
 }
 
 @media (max-width: 640px) {
+
 	/* Keep conversation bubbles readable without overflowing the viewport. */
 	.consultation-chat-box {
 		min-height: 240px;
 	}
-
 	.chat-log {
-		height: 240px;
+		height: 315px;
 		padding: 10px;
 	}
 
@@ -246,7 +249,10 @@
 .consultation-file-input {
 	display: none;
 }
-
+.consultation-file-icon {
+	margin-right: 6px;
+	font-size: 1.2rem;
+}
 .consultation-file-button {
 	height: 42px;
 	padding: 0 12px;

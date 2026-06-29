@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { FiSend, FiUser } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
+import { TbReportMedical } from "react-icons/tb";
 import ChatMarkdown from "../../components/markdown/ChatMarkdown";
 import "./ConsultationChat.css";
 
@@ -202,7 +203,7 @@ function ConsultationChat({
 
                     {/* File input for selecting an image to send with the message. Disabled if no consultation is active. */}
                     <label className="consultation-file-button">
-                        Upload Report
+                        <TbReportMedical className="consultation-file-icon" />  Upload Report
                         <input
                             className="consultation-file-input"
                             type="file"
