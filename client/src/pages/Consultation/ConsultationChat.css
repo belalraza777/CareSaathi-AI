@@ -243,3 +243,40 @@
 	}
 }
 
+.consultation-file-input {
+	display: none;
+}
+
+.consultation-file-button {
+	height: 42px;
+	padding: 0 12px;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border);
+	background: rgba(255, 255, 255, 0.7);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.9rem;
+	font-weight: 600;
+	transition: 0.2s ease;
+}
+
+.consultation-file-button:hover {
+	background: rgba(47, 128, 237, 0.08);
+}
+
+.consultation-selected-image {
+	margin-top: 8px;
+	padding: 8px 12px;
+	border-radius: 10px;
+	background: rgba(86, 204, 242, 0.12);
+	border: 1px solid rgba(86, 204, 242, 0.28);
+	font-size: 0.85rem;
+	color: rgba(31, 41, 55, 0.85);
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

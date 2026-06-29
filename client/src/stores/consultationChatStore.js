@@ -9,6 +9,9 @@ export const useConsultationChatStore = create((set, get) => ({
     loadingHistory: true,
     loadingConsultationData: false,
     error: "",
+    selectedImage: null, // Currently selected image file for sending with a message.
+    setSelectedImage: (file) => set({ selectedImage: file }),
+
     // Action to update the current chat message input.
     setChatMessage: (value) => set({ chatMessage: value }),
     clearError: () => set({ error: "" }),
@@ -81,40 +84,65 @@ export const useConsultationChatStore = create((set, get) => ({
             loadingHistory: false,
         });
     },
+
     // Send and append both user and assistant messages from one action.
-    sendMessage: async (consultationId, messageText) => {
+    // Send and append both user and assistant messages from one action.
+    sendMessage: async (consultationId, messageText, imageFile) => {
         const safeMessage = messageText?.trim();
-        const { loadingChat } = get();
-        if (!safeMessage || !consultationId || loadingChat) {
+
+        const {loadingChat} = get();
+
+        if ((!safeMessage && !imageFile) || !consultationId || loadingChat) {
             return { success: false, skipped: true };
         }
-
         set((state) => ({
             error: "",
             loadingChat: true,
             chatMessage: "",
-            messages: [...state.messages, { role: "user", message: safeMessage }],
+            messages: [
+                ...state.messages,
+                {
+                    role: "user",
+                    message:
+                        safeMessage ||
+                        "[Image uploaded]"
+                }
+            ]
         }));
 
-        const result = await chatWithConsultation(consultationId, safeMessage);
-        if (result.success) {
-            const assistantMessage = result.response || "No response received";
-            const nextRiskLevel = result.data?.riskLevel;
+        const result = await chatWithConsultation(
+            consultationId,
+            safeMessage || "",
+            imageFile
+        );
 
+        if (result.success) {
             set((state) => ({
                 loadingChat: false,
-                messages: [...state.messages, { role: "assistant", message: assistantMessage }],
-                consultationData: nextRiskLevel
-                    ? { ...(state.consultationData || {}), riskLevel: nextRiskLevel }
-                    : state.consultationData,
+                selectedImage: null,
+                messages: [
+                    ...state.messages,
+                    {
+                        role: "assistant",
+                        message: result.response
+                    }
+                ]
             }));
-            return { success: true, assistantMessage };
+
+            return {
+                success: true,
+                assistantMessage: result.response
+            };
         }
 
         set({
             loadingChat: false,
-            error: result.message || "Failed to send message",
+            error: result.message
         });
-        return { success: false, message: result.message || "Failed to send message" };
+
+        return {
+            success: false,
+            message: result.message
+        };
     },
 }));

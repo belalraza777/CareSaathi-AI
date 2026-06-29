@@ -13,26 +13,36 @@ export const createConsultation = async (consultationData) => {
     }
 };
 
-export const chatWithConsultation = async (consultationId, message) => {
+// Send a message to the AI doctor for a specific consultation, optionally including an image file.
+export const chatWithConsultation = async (consultationId, message, image = null) => {
     try {
-        // AI responses can take longer than regular CRUD calls, so use a larger timeout here.
-        const response = await axiosInstance.post(`/consultation/chat/${consultationId}`, { message }, { timeout: 60000 });
+        const formData = new FormData();
+        formData.append("message", message);
+        if (image) {
+            formData.append("image", image);
+        }
+        const response = await axiosInstance.post(
+            `/consultation/chat/${consultationId}`,
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
         return {
             success: true,
             data: response.data.data,
             response: response.data.response,
             message: response.data.message,
         };
+
     } catch (error) {
-        if (error.code === "ECONNABORTED") {
-            return {
-                success: false,
-                message: "AI doctor response timed out. Please try again.",
-            };
-        }
         return {
             success: false,
-            message: error.response?.data?.message || 'Failed to send consultation message',
+            message:
+                error.response?.data?.message ||
+                "Failed to send consultation message",
         };
     }
 };
