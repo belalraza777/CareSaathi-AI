@@ -7,6 +7,7 @@ import {
 } from "../utils/joiValidation.js";
 import asyncWrapper from "../utils/asyncWrapper.js";
 import { uploadChatImage } from "../middlewares/upload.js";
+import { chatLimiter } from "../middlewares/rateLimit.js";
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.post(
 router.post(
     "/chat/:consultationId",
     verifyToken,
+    chatLimiter,
     uploadChatImage,
     consultationChatValidation,
     asyncWrapper(consultationController.chatConsultation)

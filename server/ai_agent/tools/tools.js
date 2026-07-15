@@ -25,7 +25,7 @@ const toObjectId = (value) =>
 
 const getLlm = async () => {
   const mod = await import("../agent/agent.js");
-  return mod.llm;
+  return mod.model;
 };
 
 // fetch fallback (Node safe)
@@ -34,20 +34,18 @@ const fetchFn = global.fetch || (await import("node-fetch")).default;
 // -------------------------
 // Schemas
 // -------------------------
-const emptySchema = z.object({}).passthrough();
+const emptySchema = z.object({});
 
 const riskSchema = z.object({
   risk_level: z.enum(["Mild", "Moderate", "Critical"]),
 });
 
 const medicineSchema = z.object({
-  symptom: z.string().optional(),
-  input: z.string().nullable().optional(),
+    symptom: z.string(),
 });
 
 const calculateRiskSchema = z.object({
-  symptoms: z.array(z.string()).optional(),
-  input: z.union([z.string(), z.array(z.string()), z.null()]).optional(),
+  symptoms: z.array(z.string()).default([]),
 });
 
 
@@ -217,13 +215,7 @@ export const recommendOTCTool = tool(
 // -------------------------
 export const calculateRiskTool = tool(
   async (args) => {
-    const rawSymptoms = Array.isArray(args?.symptoms)
-      ? args.symptoms
-      : typeof args?.input === "string"
-        ? [args.input]
-        : Array.isArray(args?.input)
-          ? args.input
-          : [];
+   const rawSymptoms = args.symptoms;
 
     try {
       const model = await getLlm();
@@ -292,7 +284,6 @@ Symptoms: ${JSON.stringify(rawSymptoms)}`
 // Export
 // -------------------------
 export const tools = [
-  // getPatientProfileTool,
   setRiskLevelTool,
   recommendOTCTool,
   calculateRiskTool,

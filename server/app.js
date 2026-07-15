@@ -9,14 +9,8 @@ import authRoutes from './routes/authRoute.js';
 import oauthRoutes from './routes/oauthRoute.js';
 import profileRoutes from './routes/profileRoute.js';
 import consultationRoutes from './routes/consultationRoute.js';
+import { globalLimiter } from './middlewares/rateLimit.js';
 
-// Rate limiter configuration
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX || 300),
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 
 //middleware
 app.set('trust proxy', 1);  // trust first proxy (important for secure cookies in production)
@@ -24,12 +18,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('combined'));
-app.use(helmet());
-app.use(apiLimiter);
+app.use(helmet());  // Set security-related HTTP headers
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
+app.use(globalLimiter); //global rate limiter for all routes
 
 
 //route
