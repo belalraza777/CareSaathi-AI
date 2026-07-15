@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiAlertTriangle } from "react-icons/fi";
+import { FiAlertTriangle, FiMic, FiMessageCircle } from "react-icons/fi";
 import { useConsultationChatStore } from "../../stores/consultationChatStore";
 import ConsultationChat from "./ConsultationChat";
+import ConsultationDetails from "./ConsultationDetails";
 import "./Consultation.css";
 import VoiceChat from "./VoiceChat";
 
@@ -10,6 +11,9 @@ function Consultation() {
     // Read consultation id from URL and keep a safe fallback string.
     const { consultationId: routeConsultationId } = useParams();
     const activeConsultationId = routeConsultationId || "";
+
+    // Which workspace pane is visible: "voice" (Talk) or "chat" (Chat).
+    const [activeMode, setActiveMode] = useState("chat");
 
     // Pull chat state, consultation state, and actions from the shared store.
     const {
@@ -73,20 +77,9 @@ function Consultation() {
         selectedImage
     ]);
 
-    // Determine risk level and apply appropriate styling for the consultation summary section.
-    const riskText = consultationData?.riskLevel || "n/a";
-
+    // Critical risk still drives the full-screen overlay here, so it stays local.
     const isCriticalRisk =
         String(consultationData?.riskLevel || "").toLowerCase() === "critical";
-
-    const riskClassName =
-        consultationData?.riskLevel === "Mild"
-            ? "consultation-risk consultation-risk--mild"
-            : consultationData?.riskLevel === "Moderate"
-                ? "consultation-risk consultation-risk--moderate"
-                : consultationData?.riskLevel === "Critical"
-                    ? "consultation-risk consultation-risk--critical"
-                    : "consultation-risk";
 
     // Freeze page scroll while emergency overlay is open.
     useEffect(() => {
@@ -134,95 +127,94 @@ function Consultation() {
                 Consultation
             </h2>
 
-            <section className="consultation-card">
+            <ConsultationDetails
+                consultationData={consultationData}
+                loadingConsultationData={loadingConsultationData}
+                fallbackConsultationId={activeConsultationId}
+            />
 
-                <h3>
-                    Details
-                </h3>
+            {/* Mode toggle swaps the workspace between voice ("Talk") and text ("Chat"). */}
+            <div
+                className="consultation-mode-toggle"
+                role="tablist"
+                aria-label="Choose how to communicate"
+            >
+                <span
+                    className={`consultation-mode-toggle__thumb consultation-mode-toggle__thumb--${activeMode}`}
+                    aria-hidden="true"
+                />
 
-                {loadingConsultationData ? (
-                    <p>
-                        Loading consultation details...
-                    </p>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeMode === "voice"}
+                    className={`consultation-mode-toggle__option${activeMode === "voice" ? " is-active" : ""}`}
+                    onClick={() => setActiveMode("voice")}
+                >
+                    <FiMic aria-hidden="true" />
+                    <span>Talk</span>
+                </button>
+
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeMode === "chat"}
+                    className={`consultation-mode-toggle__option${activeMode === "chat" ? " is-active" : ""}`}
+                    onClick={() => setActiveMode("chat")}
+                >
+                    <FiMessageCircle aria-hidden="true" />
+                    <span>Chat</span>
+                </button>
+            </div>
+
+            {/* Single active workspace pane, driven by the toggle above. */}
+            <div className="consultation-panes">
+
+                {activeMode === "voice" ? (
+                    <section
+                        key="voice"
+                        className="consultation-card consultation-pane"
+                        role="tabpanel"
+                        aria-label="Talk"
+                    >
+
+                        <h3>
+                            Talk
+                        </h3>
+
+                        <VoiceChat
+                            setChatMessage={setChatMessage}
+                            onSendMessage={handleSendMessage}
+                        />
+
+                    </section>
                 ) : (
-                    <div className="consultation-detail-grid">
+                    <section
+                        key="chat"
+                        className="consultation-card consultation-pane"
+                        role="tabpanel"
+                        aria-label="Chat"
+                    >
 
-                        <p>
-                            <strong>ID:</strong>
-                            {" "}
-                            {consultationData?.consultationId || activeConsultationId || "n/a"}
-                        </p>
+                        <h3>
+                            Chat
+                        </h3>
 
-                        <p>
-                            <strong>Symptoms:</strong>
-                            {" "}
-                            {consultationData?.mainSymptom?.length
-                                ? consultationData.mainSymptom.join(", ")
-                                : "n/a"}
-                        </p>
+                        <ConsultationChat
+                            consultationId={activeConsultationId}
+                            messages={messages}
+                            loadingHistory={loadingHistory}
+                            loadingChat={loadingChat}
+                            error={chatError}
+                            chatMessage={chatMessage}
+                            setChatMessage={setChatMessage}
+                            selectedImage={selectedImage}
+                            setSelectedImage={setSelectedImage}
+                            onSendMessage={handleSendMessage}
+                        />
 
-                        <p>
-                            <strong>Duration:</strong>
-                            {" "}
-                            {consultationData?.symptomDuration || "n/a"}
-                        </p>
-
-                        <p>
-                            <strong>Risk:</strong>
-                            {" "}
-                            <span className={riskClassName}>
-                                {riskText}
-                            </span>
-                        </p>
-
-                        <p>
-                            <strong>Severity:</strong>
-                            {" "}
-                            {consultationData?.severity || "n/a"}
-                        </p>
-
-                    </div>
+                    </section>
                 )}
-
-            </section>
-
-            {/* Two-pane workspace: voice interaction on left, text chat on right. */}
-            <div className="consultation-grid">
-
-                <section className="consultation-card">
-
-                    <h3>
-                        Talk
-                    </h3>
-
-                    <VoiceChat
-                        setChatMessage={setChatMessage}
-                        onSendMessage={handleSendMessage}
-                    />
-
-                </section>
-
-
-                <section className="consultation-card">
-
-                    <h3>
-                        Chat
-                    </h3>
-
-                    <ConsultationChat
-                        consultationId={activeConsultationId}
-                        messages={messages}
-                        loadingHistory={loadingHistory}
-                        loadingChat={loadingChat}
-                        error={chatError}
-                        chatMessage={chatMessage}
-                        setChatMessage={setChatMessage}
-                        selectedImage={selectedImage}
-                        setSelectedImage={setSelectedImage}
-                        onSendMessage={handleSendMessage}
-                    />
-
-                </section>
 
             </div>
 

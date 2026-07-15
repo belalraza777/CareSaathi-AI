@@ -6,9 +6,10 @@ import { tools } from "../tools/tools.js";
 import { loadHistory, normalizeContent } from "./agentHelpers.js";
 import SYSTEM_PROMPT from "./systemPrompt.js";
 
-const DEFAULT_MODEL = "openai/gpt-oss-120b";
+const DEFAULT_MODEL = "openai/gpt-oss-120b"; //alternatively,[llama-3.3-70b-versatile]
 const IMAGE_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
+// This function handles a user's message in a consultation context. It selects the appropriate model based on whether an image is included, creates an agent to manage the conversation, loads the conversation history, and processes the user's message (including any attached image) before invoking the agent to generate a response. The response is then normalized and returned.
 export async function handleUserMessage({ userId, consultationId, message, imageFile }) {
 
   // Select model based on image
@@ -16,7 +17,9 @@ export async function handleUserMessage({ userId, consultationId, message, image
     model: imageFile ? IMAGE_MODEL : DEFAULT_MODEL,
     temperature: 0.4,
     apiKey: process.env.GROQ_API_KEY,
+    maxTokens: 1024
   });
+
   // Create an agent with the selected model, tools, and system prompt. The agent will handle the conversation flow and generate responses based on the user's input and the context of the consultation.
   const agent = createAgent({
     model,
