@@ -71,6 +71,7 @@ const formatList = (value) =>
     ? value.map((item) => String(item)).join(", ")
     : "Unknown";
 
+
 export async function buildIntakeContextMessage({ userId, consultationId }) {
   if (
     !mongoose.Types.ObjectId.isValid(String(userId ?? "")) ||

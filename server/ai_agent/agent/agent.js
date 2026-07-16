@@ -1,25 +1,10 @@
 import "dotenv/config";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage } from "@langchain/core/messages";
 import { createAgent } from "langchain";
 import { tools } from "../tools/tools.js";
 import { loadHistory, normalizeContent } from "./agentHelpers.js";
 import SYSTEM_PROMPT from "./systemPrompt.js";
-
-/**
- * Gemini model
- * Handles:
- * - Text
- * - Images
- * - Tool Calling
- * - Long Context
- */
-export const model = new ChatGoogleGenerativeAI({
-  model: "gemini-3.5-flash",
-  apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0.2,
-  maxOutputTokens: 1024,
-});
+import { model } from "./llm.js";
 
 
 /**

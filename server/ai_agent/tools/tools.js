@@ -24,11 +24,11 @@ const toObjectId = (value) =>
   new mongoose.Types.ObjectId(String(value));
 
 const getLlm = async () => {
-  const mod = await import("../agent/agent.js");
+  const mod = await import("../agent/llm.js");
   return mod.model;
 };
 
-// fetch fallback (Node safe)
+// fetch fallback (Node safe) {use for fetching external APIs}
 const fetchFn = global.fetch || (await import("node-fetch")).default;
 
 // -------------------------

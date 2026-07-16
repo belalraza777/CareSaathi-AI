@@ -1,12 +1,11 @@
-// Displays the consultation summary card: ID, symptoms, duration, risk, severity.
-// Owns its own risk-badge styling logic so callers just pass raw data down.
-function ConsultationDetails({
+import React from "react";
+
+const ConsultationDetails = React.memo(function ConsultationDetails({
     consultationData,
     loadingConsultationData,
     fallbackConsultationId
 }) {
 
-    console.log("ConsultationDetails: consultationData:", consultationData);
     const riskText = consultationData?.riskLevel || "n/a";
 
     const riskClassName =
@@ -99,18 +98,11 @@ function ConsultationDetails({
                             : "n/a"}
                     </p>
 
-                    <p>
-                        <strong>Last Updated:</strong>{" "}
-                        {consultationData?.updatedAt
-                            ? new Date(consultationData.updatedAt).toLocaleString()
-                            : "n/a"}
-                    </p>
-
                 </div>
             )}
 
         </section>
     );
-}
+});
 
 export default ConsultationDetails;
