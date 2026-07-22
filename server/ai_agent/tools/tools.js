@@ -44,9 +44,9 @@ const medicineSchema = z.object({
     symptom: z.string(),
 });
 
-const calculateRiskSchema = z.object({
-  symptoms: z.array(z.string()).default([]),
-});
+// const calculateRiskSchema = z.object({
+//   symptoms: z.array(z.string()).default([]),
+// });
 
 
 
@@ -213,47 +213,47 @@ export const recommendOTCTool = tool(
 // -------------------------
 // Tool 4: Calculate Risk
 // -------------------------
-export const calculateRiskTool = tool(
-  async (args) => {
-   const rawSymptoms = args.symptoms;
+// export const calculateRiskTool = tool(
+//   async (args) => {
+//    const rawSymptoms = args.symptoms;
 
-    try {
-      const model = await getLlm();
-      const response = await model.invoke(
-        `Return ONLY JSON:
-{"risk":"Mild"|"Moderate"|"Critical","reason":"short"}
+//     try {
+//       const model = await getLlm();
+//       const response = await model.invoke(
+//         `Return ONLY JSON:
+// {"risk":"Mild"|"Moderate"|"Critical","reason":"short"}
 
-Symptoms: ${JSON.stringify(rawSymptoms)}`
-      );
+// Symptoms: ${JSON.stringify(rawSymptoms)}`
+//       );
 
-      const content =
-        typeof response === "string"
-          ? response
-          : response?.content || "";
+//       const content =
+//         typeof response === "string"
+//           ? response
+//           : response?.content || "";
 
-      let parsed;
-      try {
-        parsed = JSON.parse(
-          String(content).replace(/```json|```/g, "").trim()
-        );
-      } catch {
-        parsed = { risk: "Mild", reason: "" };
-      }
+//       let parsed;
+//       try {
+//         parsed = JSON.parse(
+//           String(content).replace(/```json|```/g, "").trim()
+//         );
+//       } catch {
+//         parsed = { risk: "Mild", reason: "" };
+//       }
 
-      return {
-        risk: parsed.risk || "Mild",
-        reason: parsed.reason || "",
-      };
-    } catch {
-      return { risk: "Mild", reason: "" };
-    }
-  },
-  {
-    name: "calculate_risk",
-    description: "Calculate patient risk",
-    schema: calculateRiskSchema,
-  }
-);
+//       return {
+//         risk: parsed.risk || "Mild",
+//         reason: parsed.reason || "",
+//       };
+//     } catch {
+//       return { risk: "Mild", reason: "" };
+//     }
+//   },
+//   {
+//     name: "calculate_risk",
+//     description: "Calculate patient risk",
+//     schema: calculateRiskSchema,
+//   }
+// );
 
 // // -------------------------
 // // Tool 5: Consultation Data
@@ -286,7 +286,7 @@ Symptoms: ${JSON.stringify(rawSymptoms)}`
 export const tools = [
   setRiskLevelTool,
   recommendOTCTool,
-  calculateRiskTool,
+  // calculateRiskTool,
   // consultationDataTool,
   retrieveMedicalKnowledgeTool,
   getPatientContextTool

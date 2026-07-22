@@ -1,50 +1,6 @@
 // 🔊 TTS SERVICE (Google / Browser Speech API)
 
-// export const speakText = (text) => {
-//   try {
-//     //  If not supported
-//     if (!window.speechSynthesis) {
-//       console.error("Speech synthesis not supported");
-//       return;
-//     }
-
-//     //  Stop previous speech (important)
-//     window.speechSynthesis.cancel();
-
-//     //  Create speech instance
-//     const utterance = new SpeechSynthesisUtterance(
-//       text?.trim() || "Hello, I am your AI doctor."
-//     );
-
-//     //  Language
-//     utterance.lang = "hi-IN"; // English with Indian accent
-
-//     //  Make it sound better
-//     utterance.rate = 0.9;
-//     utterance.pitch = 1;
-//     utterance.volume = 1;
-
-//     //  Get available voices
-//     const voices = window.speechSynthesis.getVoices();
-
-//     //  Try to pick best Google voice
-//     const preferredVoice =
-//       voices.find((v) => v.name.includes("Google")) ||
-//       voices.find((v) => v.lang === "hi-IN") ||
-//       voices[0]; // fallback to first available
-
-//     if (preferredVoice) {
-//       utterance.voice = preferredVoice;
-//     }
-
-//     //  Speak
-//     window.speechSynthesis.speak(utterance);
-
-//   } catch (err) {
-//     console.error("TTS Error:", err);
-//   }
-// };
-
+// This service handles text-to-speech (TTS) functionality for the application. It uses the ElevenLabs API for TTS if an API key is provided, and falls back to the browser's built-in speech synthesis if not.
 export const speakText = async (text) => {
   const apiKey = import.meta.env.VITE_ELEVENLAB_API_KEY;
   const safeText = text?.trim() || "Hello, mai aapka AI doctor hoon.";

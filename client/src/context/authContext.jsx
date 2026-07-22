@@ -17,11 +17,8 @@ export const AuthProvider = ({ children }) => {
     const saveAuthData = useCallback((userData) => {
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
-        // Token is stored in httpOnly cookie by backend
-        const tokenFromStorage = localStorage.getItem("token");
-        if (tokenFromStorage) {
-            setToken(tokenFromStorage);
-        }
+        localStorage.setItem("token", "cookie-auth"); // always set, since we only get here on a confirmed valid session
+        setToken("cookie-auth");
     }, []);
 
     // Clear all auth data on logout
@@ -50,30 +47,18 @@ export const AuthProvider = ({ children }) => {
         checkUser();
     }, [saveAuthData, clearAuthData]);
 
-    // Connect/disconnect socket based on token
-    // useEffect(() => {
-    //     if (token) {
-    //         connectSocket(token);
-    //     }
-    //     return () => {
-    //         if (!token) {
-    //             disconnectSocket();
-    //         }
-    //     };
-    // }, [token]);
 
     // Handle user login
     const handleLogin = useCallback(async (credentials) => {
         const result = await login(credentials);
         if (result.success) {
-            localStorage.setItem("token", "cookie-auth");
-            setToken("cookie-auth");
             saveAuthData(result.data);
-        }else {
+        } else {
             setError(result.message || "Login failed");
         }
         return result;
     }, [saveAuthData]);
+
 
     // Refresh user data from server
     const refreshUser = useCallback(async () => {
@@ -92,10 +77,8 @@ export const AuthProvider = ({ children }) => {
     const handleRegister = useCallback(async (credentials) => {
         const result = await register(credentials);
         if (result.success) {
-            localStorage.setItem("token", "cookie-auth");
-            setToken("cookie-auth");
             saveAuthData(result.data);
-        }else{
+        } else {
             setError(result.message || "Registration failed");
         }
         return result;
@@ -141,3 +124,19 @@ export const AuthProvider = ({ children }) => {
 
 // Custom hook to use auth context
 export const useAuth = () => useContext(AuthContext);
+
+
+//---------Auth Flow -----------------
+
+// - Local login/register and Google OAuth both end with the backend
+//   setting an httpOnly JWT cookie. JS can't read that cookie, so we
+//   keep a simple localStorage flag ("token" = "cookie-auth") just to
+//   know client-side that a session exists.
+// - saveAuthData() is the one place that sets user + that flag. It
+//   runs after local login/register AND after Google OAuth's
+//   refreshUser() call (Oauth_success.jsx) - so both paths behave the same.
+// - On app load, we only call /auth/check if that flag is set.
+// - Logout clears the cookie (server) and the flag + user (client).
+// - The real auth check on every request is the cookie (withCredentials:
+//   true in axios.js) - the localStorage flag is just a UI hint, never
+//   a real token.
